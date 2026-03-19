@@ -208,8 +208,8 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
 
         <div class="usitemap-container">
             <div class="usitemap-header">
-                <h2>🗺️ uSitemap 站点地图</h2>
-                <p>自动生成符合搜索引擎标准的 XML 站点地图，帮助搜索引擎更好地索引您的网站</p>
+                <h2>🗺️ uSitemap</h2>
+                <p>自动生成 XML 站点地图，支持多搜索引擎推送</p>
             </div>
 
             <div class="usitemap-tabs">
