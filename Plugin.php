@@ -56,7 +56,7 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
     {
         echo '<style>
         .usitemap-container {
-            max-width: 800px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         .usitemap-header {
@@ -81,24 +81,28 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
         }
         .usitemap-tabs {
             display: flex;
-            gap: 10px;
+            gap: 6px;
             margin-bottom: 20px;
             border-bottom: 2px solid #e1e4e8;
             padding-bottom: 10px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
         }
         .usitemap-tab {
-            padding: 10px 20px;
+            padding: 8px 14px;
             background: #f8f9fa;
             border: none;
             border-radius: 6px 6px 0 0;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             color: #555;
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .usitemap-tab:hover {
             background: #e9ecef;
@@ -185,24 +189,62 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             </div>
 
             <div class="usitemap-tabs">
-                <button class="usitemap-tab active" data-tab="basic">📄 内容设置</button>
-                <button class="usitemap-tab" data-tab="filter">🔍 过滤设置</button>
-                <button class="usitemap-tab" data-tab="seo">⚙️ SEO 设置</button>
+                <button class="usitemap-tab active" data-tab="sitemap">⚙️ Sitemap设置</button>
+                <button class="usitemap-tab" data-tab="baidu">📍 百度推送</button>
+                <button class="usitemap-tab" data-tab="google">🔍 Google推送</button>
+                <button class="usitemap-tab" data-tab="bing">🎯 Bing推送</button>
+                <button class="usitemap-tab" data-tab="sogou">🔍 搜狗推送</button>
+                <button class="usitemap-tab" data-tab="360">🛡️ 360推送</button>
             </div>
 
-            <div id="basic-section" class="usitemap-section active">
-                <div class="usitemap-section-title">📄 内容设置</div>
-                <div id="basic-content"></div>
+            <div id="sitemap-section" class="usitemap-section active">
+                <div class="usitemap-section-title">⚙️ Sitemap设置</div>
+                <div id="sitemap-content"></div>
             </div>
 
-            <div id="filter-section" class="usitemap-section">
-                <div class="usitemap-section-title">🔍 过滤设置</div>
-                <div id="filter-content"></div>
+            <div id="baidu-section" class="usitemap-section">
+                <div class="usitemap-section-title">📍 百度推送</div>
+                <div style="text-align: center; padding: 40px 20px; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🚧</div>
+                    <div style="font-size: 16px; margin-bottom: 10px;">功能开发中</div>
+                    <div style="font-size: 13px;">百度搜索引擎推送功能即将上线，敬请期待</div>
+                </div>
             </div>
 
-            <div id="seo-section" class="usitemap-section">
-                <div class="usitemap-section-title">⚙️ SEO 设置</div>
-                <div id="seo-content"></div>
+            <div id="google-section" class="usitemap-section">
+                <div class="usitemap-section-title">🔍 Google推送</div>
+                <div style="text-align: center; padding: 40px 20px; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🚧</div>
+                    <div style="font-size: 16px; margin-bottom: 10px;">功能开发中</div>
+                    <div style="font-size: 13px;">Google搜索引擎推送功能即将上线，敬请期待</div>
+                </div>
+            </div>
+
+            <div id="bing-section" class="usitemap-section">
+                <div class="usitemap-section-title">🎯 Bing推送</div>
+                <div style="text-align: center; padding: 40px 20px; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🚧</div>
+                    <div style="font-size: 16px; margin-bottom: 10px;">功能开发中</div>
+                    <div style="font-size: 13px;">Bing搜索引擎推送功能即将上线，敬请期待</div>
+                </div>
+            </div>
+
+            <div id="sogou-section" class="usitemap-section">
+                <div class="usitemap-section-title">🔍 搜狗推送</div>
+                <div style="text-align: center; padding: 40px 20px; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🚧</div>
+                    <div style="font-size: 16px; margin-bottom: 10px;">功能开发中</div>
+                    <div style="font-size: 13px;">搜狗搜索引擎推送功能即将上线，敬请期待</div>
+                </div>
+            </div>
+
+            <div id="360-section" class="usitemap-section">
+                <div class="usitemap-section-title">🛡️ 360推送</div>
+                <div style="text-align: center; padding: 40px 20px; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🚧</div>
+                    <div style="font-size: 16px; margin-bottom: 10px;">功能开发中</div>
+                    <div style="font-size: 13px;">360搜索引擎推送功能即将上线，敬请期待</div>
+                </div>
             </div>
 
             <div class="usitemap-tip">
@@ -249,11 +291,9 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                 });
             }
 
-            // 分组表单元素
+            // 所有表单元素都移动到 sitemap-content
             setTimeout(function() {
-                moveToSection(["包含内容", "包含首页"], "basic-content");
-                moveToSection(["排除内容", "密码保护内容"], "filter-content");
-                moveToSection(["更新频率", "默认优先级", "最大条目数"], "seo-content");
+                moveToSection(["包含内容", "包含首页", "排除内容", "密码保护内容", "更新频率", "默认优先级", "最大条目数"], "sitemap-content");
             }, 100);
         });
         </script>';
