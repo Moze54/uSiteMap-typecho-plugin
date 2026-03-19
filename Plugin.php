@@ -2,10 +2,10 @@
 /**
  * 自动生成网站地图插件
  * 
- * @package Sitemap
- * @author cxuxrxsxoxr
+ * @package Usitemap
+ * @author 优优
  * @version 1.0.0
- * @link http://www.typecho.org
+ * @link https://blog.uuhb.cn
  */
 class Sitemap_Plugin implements Typecho_Plugin_Interface
 {
