@@ -93,34 +93,47 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             color: #1565c0;
         }
         .usitemap-tabs {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 10px;
             margin-bottom: 20px;
-            border-bottom: 2px solid #e1e4e8;
-            padding-bottom: 15px;
-            flex-wrap: wrap;
+        }
+        .usitemap-submit-area button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(25, 118, 210, 0.4) !important;
+        }
+        .usitemap-submit-area button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3) !important;
         }
         .usitemap-tab {
-            padding: 10px 20px;
+            padding: 12px 16px;
             background: #f8f9fa;
-            border: none;
-            border-radius: 8px 8px 0 0;
+            border: 2px solid #e1e4e8;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             color: #555;
             transition: all 0.3s;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
             white-space: nowrap;
+            text-align: center;
         }
         .usitemap-tab:hover {
-            background: #e9ecef;
+            background: #e3f2fd;
+            border-color: #90caf9;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         .usitemap-tab.active {
-            background: #90caf9;
-            color: #0d47a1;
+            background: linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);
+            color: #fff;
+            border-color: #1976d2;
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
         }
         .usitemap-section {
             display: none;
@@ -199,10 +212,6 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                 <p>自动生成符合搜索引擎标准的 XML 站点地图，帮助搜索引擎更好地索引您的网站</p>
             </div>
 
-            <div class="usitemap-submit-area" style="margin-bottom: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px; border: 1px solid #c8e6c9; text-align: right;">
-                <button type="submit" class="btn primary">保存配置</button>
-            </div>
-
             <div class="usitemap-tabs">
                 <button type="button" class="usitemap-tab active" data-tab="sitemap">⚙️ Sitemap设置</button>
                 <button type="button" class="usitemap-tab" data-tab="baidu">📍 百度推送</button>
@@ -211,6 +220,10 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                 <button type="button" class="usitemap-tab" data-tab="sogou">🔍 搜狗推送</button>
                 <button type="button" class="usitemap-tab" data-tab="360">🛡️ 360推送</button>
                 <button type="button" class="usitemap-tab" data-tab="logs">📋 推送记录</button>
+            </div>
+
+            <div class="usitemap-submit-area" style="margin-bottom: 20px; text-align: right;">
+                <button type="submit" class="btn primary" style="padding: 10px 28px; height: 40px; line-height: 20px; background: linear-gradient(135deg, #42a5f5 0%, #1976d2 100%); border: none; border-radius: 6px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3); display: inline-block; vertical-align: middle;">保存配置</button>
             </div>
 
             <div id="sitemap-section" class="usitemap-section active">
