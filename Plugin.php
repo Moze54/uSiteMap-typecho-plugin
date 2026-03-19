@@ -55,6 +55,9 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
     public static function config(Typecho_Widget_Helper_Form $form)
     {
         echo '<style>
+        .typecho-option-max-width-1000 .typecho-body {
+            max-width: 1400px !important;
+        }
         .usitemap-container {
             max-width: 1400px;
             margin: 0 auto;
@@ -180,9 +183,9 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             font-size: 13px;
             line-height: 1.8;
         }
-        </style>';
+        </style>
 
-        echo '<div class="usitemap-container">
+        <div class="usitemap-container">
             <div class="usitemap-header">
                 <h2>🗺️ uSitemap 站点地图</h2>
                 <p>自动生成符合搜索引擎标准的 XML 站点地图，帮助搜索引擎更好地索引您的网站</p>
@@ -256,45 +259,55 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                     <li>优先级范围 0.0-1.0，重要内容建议设置更高优先级</li>
                 </ul>
             </div>
-        </div>';
+        </div>
+
+        <div class="usitemap-temp-container" style="display:none;"></div>';
 
         echo '<script>
         document.addEventListener("DOMContentLoaded", function() {
-            // 标签切换功能
-            const tabs = document.querySelectorAll(".usitemap-tab");
-            const sections = document.querySelectorAll(".usitemap-section");
+            // 等待表单元素渲染完成
+            setTimeout(function() {
+                // 找到form标签和自定义容器
+                var form = document.querySelector("form");
+                var tempContainer = document.querySelector(".usitemap-temp-container");
+                var sitemapContent = document.getElementById("sitemap-content");
 
-            tabs.forEach(tab => {
-                tab.addEventListener("click", function() {
-                    const targetTab = this.getAttribute("data-tab");
+                if (form && tempContainer && sitemapContent) {
+                    // 先将自定义的tab结构移动到form内部的开头
+                    var usitemapContainer = document.querySelector(".usitemap-container");
+                    if (usitemapContainer) {
+                        form.insertBefore(usitemapContainer, form.firstChild);
+                    }
+
+                    // 将所有表单元素移动到sitemap-content中
+                    var options = document.querySelectorAll(".typecho-option");
+                    for (var i = 0; i < options.length; i++) {
+                        sitemapContent.appendChild(options[i]);
+                    }
+                }
+            }, 100);
+
+            // 标签切换功能
+            var tabs = document.querySelectorAll(".usitemap-tab");
+            var sections = document.querySelectorAll(".usitemap-section");
+
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].addEventListener("click", function() {
+                    var targetTab = this.getAttribute("data-tab");
 
                     // 移除所有 active 类
-                    tabs.forEach(t => t.classList.remove("active"));
-                    sections.forEach(s => s.classList.remove("active"));
+                    for (var j = 0; j < tabs.length; j++) {
+                        tabs[j].classList.remove("active");
+                    }
+                    for (var k = 0; k < sections.length; k++) {
+                        sections[k].classList.remove("active");
+                    }
 
                     // 添加 active 类到当前标签和对应的内容区
                     this.classList.add("active");
                     document.getElementById(targetTab + "-section").classList.add("active");
                 });
-            });
-
-            // 将表单元素移动到对应的分区
-            function moveToSection(fieldNames, targetId) {
-                fieldNames.forEach(name => {
-                    const options = document.querySelectorAll(".typecho-option");
-                    options.forEach(option => {
-                        const label = option.querySelector("label");
-                        if (label && label.textContent.includes(name)) {
-                            document.getElementById(targetId).appendChild(option);
-                        }
-                    });
-                });
             }
-
-            // 所有表单元素都移动到 sitemap-content
-            setTimeout(function() {
-                moveToSection(["包含内容", "包含首页", "排除内容", "密码保护内容", "更新频率", "默认优先级", "最大条目数"], "sitemap-content");
-            }, 100);
         });
         </script>';
 
