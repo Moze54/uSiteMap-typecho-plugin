@@ -2,12 +2,12 @@
 /**
  * 自动生成网站地图插件
  * 
- * @package Usitemap
+ * @package uSitemap
  * @author 优优
  * @version 1.0.0
  * @link https://blog.uuhb.cn
  */
-class Sitemap_Plugin implements Typecho_Plugin_Interface
+class uSitemap_Plugin implements Typecho_Plugin_Interface
 {
     /**
      * 激活插件方法
@@ -15,7 +15,7 @@ class Sitemap_Plugin implements Typecho_Plugin_Interface
     public static function activate()
     {
         // 注册路由
-        Helper::addRoute('sitemap', '/sitemap.xml', 'Sitemap_Action', 'index');
+        Helper::addRoute('sitemap', '/sitemap.xml', 'uSitemap_Action', 'index');
         
         return '插件已启用，访问 /sitemap.xml 查看网站地图';
     }
