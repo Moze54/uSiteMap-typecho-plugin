@@ -1,6 +1,2 @@
-[2026-03-19 22:18:05] [ERROR] URL无效，请检查百度站长平台是否已验证站点
-[DATA] {"remain":10,"success":0,"not_valid":["http:\/\/blog\/index.php\/archives\/16\/"]}
-[2026-03-19 22:18:37] [ERROR] URL无效，请检查百度站长平台是否已验证站点
-[DATA] {"remain":10,"success":0,"not_valid":["http:\/\/blog\/index.php\/archives\/19\/"]}
-[2026-03-19 22:38:47] [ERROR] URL无效，请检查百度站长平台是否已验证站点
-[DATA] {"remain":10,"success":0,"not_valid":["http:\/\/blog\/","http:\/\/blog\/index.php\/archives\/19\/","http:\/\/blog\/index.php\/archives\/18\/","http:\/\/blog\/index.php\/archives\/16\/","http:\/\/blog\/index.php\/archives\/13\/","http:\/\/blog\/index.php\/archives\/11\/","http:\/\/blog\/index.php\/archives\/10\/","http:\/\/blog\/index.php\/archives\/9\/","http:\/\/blog\/index.php\/archives\/1\/"]}
+[2026-03-19 23:01:17] [ERROR] URL无效，请检查百度站长平台是否已验证站点
+[DATA] {"remain":6,"success":0,"not_valid":["http:\/\/blog\/","http:\/\/blog\/index.php\/archives\/19\/","http:\/\/blog\/index.php\/archives\/18\/","http:\/\/blog\/index.php\/archives\/16\/","http:\/\/blog\/index.php\/archives\/13\/","http:\/\/blog\/index.php\/archives\/11\/","http:\/\/blog\/index.php\/archives\/10\/","http:\/\/blog\/index.php\/archives\/9\/","http:\/\/blog\/index.php\/archives\/1\/"]}

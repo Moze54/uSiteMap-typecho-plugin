@@ -27,6 +27,14 @@ class uSitemap_Action extends Typecho_Widget implements Widget_Interface_Do
         $this->on($this->request->is('index'))->index();
         $this->on($this->request->is('do=baidu_manual_push'))->baiduManualPush();
         $this->on($this->request->is('do=baidu-push'))->baiduPush();
+        $this->on($this->request->is('do=google_manual_push'))->googleManualPush();
+        $this->on($this->request->is('do=google-push'))->googlePush();
+        $this->on($this->request->is('do=bing_manual_push'))->bingManualPush();
+        $this->on($this->request->is('do=bing-push'))->bingPush();
+        $this->on($this->request->is('do=sogou_manual_push'))->sogouManualPush();
+        $this->on($this->request->is('do=sogou-push'))->sogouPush();
+        $this->on($this->request->is('do=360_manual_push'))->push360ManualPush();
+        $this->on($this->request->is('do=360-push'))->push360Push();
         $this->on($this->request->is('do=get_logs'))->getLogs();
         $this->on($this->request->is('do=clear_logs'))->clearLogs();
     }
@@ -612,7 +620,7 @@ class uSitemap_Action extends Typecho_Widget implements Widget_Interface_Do
         $logDir = __DIR__ . '/logs';
 
         if (is_dir($logDir)) {
-            $files = glob($logDir . '/baidu_push_*.log');
+            $files = glob($logDir . '/*_push_*.log');
             foreach ($files as $file) {
                 @unlink($file);
             }
@@ -622,5 +630,351 @@ class uSitemap_Action extends Typecho_Widget implements Widget_Interface_Do
             'success' => true,
             'message' => '日志已清空'
         ));
+    }
+
+    /**
+     * Google推送接口
+     */
+    public function googlePush()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用Google推送
+        if (!$pluginOptions || $pluginOptions->enableGooglePush != '1') {
+            $this->response->setStatus(403);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'Google推送功能未启用'
+            ));
+            return;
+        }
+
+        // 获取推送的URL
+        $url = $this->request->get('url');
+
+        if (empty($url)) {
+            $this->response->setStatus(400);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'URL参数不能为空'
+            ));
+            return;
+        }
+
+        // 创建推送实例
+        require_once __DIR__ . '/GooglePusher.php';
+        $pusher = uSitemap_GooglePusher::createFromPlugin($pluginOptions);
+
+        // 执行推送
+        $result = $pusher->pushUrl($url);
+
+        // 返回结果
+        $this->response->throwJson($result);
+    }
+
+    /**
+     * Google手动推送接口（推送sitemap）
+     */
+    public function googleManualPush()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用Google推送
+        if (!$pluginOptions || $pluginOptions->enableGooglePush != '1') {
+            $this->response->setStatus(403);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'Google推送功能未启用'
+            ));
+            return;
+        }
+
+        // 创建推送实例
+        require_once __DIR__ . '/GooglePusher.php';
+        $pusher = uSitemap_GooglePusher::createFromPlugin($pluginOptions);
+
+        // 获取推送数量
+        $count = isset($pluginOptions->googlePushCount) ? intval($pluginOptions->googlePushCount) : 10;
+        $count = max(1, min($count, 1000)); // 限制在1-1000之间
+        $urls = $this->getLatestUrls($count);
+
+        if (empty($urls)) {
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => '没有可推送的URL'
+            ));
+            return;
+        }
+
+        // 批量推送
+        $result = $pusher->pushUrls($urls);
+
+        // 返回结果
+        $this->response->throwJson($result);
+    }
+
+    /**
+     * Bing推送接口
+     */
+    public function bingPush()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用Bing推送
+        if (!$pluginOptions || $pluginOptions->enableBingPush != '1') {
+            $this->response->setStatus(403);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'Bing推送功能未启用'
+            ));
+            return;
+        }
+
+        // 获取推送的URL
+        $url = $this->request->get('url');
+
+        if (empty($url)) {
+            $this->response->setStatus(400);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'URL参数不能为空'
+            ));
+            return;
+        }
+
+        // 创建推送实例
+        require_once __DIR__ . '/BingPusher.php';
+        $pusher = uSitemap_BingPusher::createFromPlugin($pluginOptions);
+
+        // 执行推送
+        $result = $pusher->pushUrl($url);
+
+        // 返回结果
+        $this->response->throwJson($result);
+    }
+
+    /**
+     * Bing手动推送接口（推送sitemap）
+     */
+    public function bingManualPush()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用Bing推送
+        if (!$pluginOptions || $pluginOptions->enableBingPush != '1') {
+            $this->response->setStatus(403);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'Bing推送功能未启用'
+            ));
+            return;
+        }
+
+        // 创建推送实例
+        require_once __DIR__ . '/BingPusher.php';
+        $pusher = uSitemap_BingPusher::createFromPlugin($pluginOptions);
+
+        // 获取推送数量
+        $count = isset($pluginOptions->bingPushCount) ? intval($pluginOptions->bingPushCount) : 10;
+        $count = max(1, min($count, 1000)); // 限制在1-1000之间
+        $urls = $this->getLatestUrls($count);
+
+        if (empty($urls)) {
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => '没有可推送的URL'
+            ));
+            return;
+        }
+
+        // 批量推送
+        $result = $pusher->pushUrls($urls);
+
+        // 返回结果
+        $this->response->throwJson($result);
+    }
+
+    /**
+     * 搜狗推送接口
+     */
+    public function sogouPush()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用搜狗推送
+        if (!$pluginOptions || $pluginOptions->enableSogouPush != '1') {
+            $this->response->setStatus(403);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => '搜狗推送功能未启用'
+            ));
+            return;
+        }
+
+        // 获取推送的URL
+        $url = $this->request->get('url');
+
+        if (empty($url)) {
+            $this->response->setStatus(400);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'URL参数不能为空'
+            ));
+            return;
+        }
+
+        // 创建推送实例
+        require_once __DIR__ . '/SogouPusher.php';
+        $pusher = uSitemap_SogouPusher::createFromPlugin($pluginOptions);
+
+        // 执行推送
+        $result = $pusher->pushUrl($url);
+
+        // 返回结果
+        $this->response->throwJson($result);
+    }
+
+    /**
+     * 搜狗手动推送接口（推送sitemap）
+     */
+    public function sogouManualPush()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用搜狗推送
+        if (!$pluginOptions || $pluginOptions->enableSogouPush != '1') {
+            $this->response->setStatus(403);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => '搜狗推送功能未启用'
+            ));
+            return;
+        }
+
+        // 获取推送类型
+        $pushType = isset($pluginOptions->sogouPushType) ? $pluginOptions->sogouPushType : 'api';
+
+        // 创建推送实例
+        require_once __DIR__ . '/SogouPusher.php';
+        $pusher = uSitemap_SogouPusher::createFromPlugin($pluginOptions);
+
+        $result = array();
+
+        if ($pushType === 'sitemap') {
+            // Sitemap推送方式
+            $sitemapUrl = rtrim($this->options->siteUrl, '/') . '/sitemap.xml';
+            $result = $pusher->pushSitemap($sitemapUrl);
+        } else {
+            // API推送方式 - 获取指定数量的URL并推送
+            $count = isset($pluginOptions->sogouPushCount) ? intval($pluginOptions->sogouPushCount) : 10;
+            $count = max(1, min($count, 1000)); // 限制在1-1000之间
+            $urls = $this->getLatestUrls($count);
+
+            if (empty($urls)) {
+                $this->response->throwJson(array(
+                    'success' => false,
+                    'message' => '没有可推送的URL'
+                ));
+                return;
+            }
+
+            // 批量推送
+            $result = $pusher->pushUrls($urls);
+        }
+
+        // 返回结果
+        $this->response->throwJson($result);
+    }
+
+    /**
+     * 360推送接口
+     */
+    public function push360Push()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用360推送
+        if (!$pluginOptions || $pluginOptions->enablePush360Push != '1') {
+            $this->response->setStatus(403);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => '360推送功能未启用'
+            ));
+            return;
+        }
+
+        // 获取推送的URL
+        $url = $this->request->get('url');
+
+        if (empty($url)) {
+            $this->response->setStatus(400);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'URL参数不能为空'
+            ));
+            return;
+        }
+
+        // 创建推送实例
+        require_once __DIR__ . '/Push360Pusher.php';
+        $pusher = uSitemap_Push360Pusher::createFromPlugin($pluginOptions);
+
+        // 执行推送
+        $result = $pusher->pushUrl($url);
+
+        // 返回结果
+        $this->response->throwJson($result);
+    }
+
+    /**
+     * 360手动推送接口（推送sitemap）
+     */
+    public function push360ManualPush()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用360推送
+        if (!$pluginOptions || $pluginOptions->enablePush360Push != '1') {
+            $this->response->setStatus(403);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => '360推送功能未启用'
+            ));
+            return;
+        }
+
+        // 获取推送类型
+        $pushType = isset($pluginOptions->push360PushType) ? $pluginOptions->push360PushType : 'api';
+
+        // 创建推送实例
+        require_once __DIR__ . '/Push360Pusher.php';
+        $pusher = uSitemap_Push360Pusher::createFromPlugin($pluginOptions);
+
+        $result = array();
+
+        if ($pushType === 'sitemap') {
+            // Sitemap推送方式
+            $sitemapUrl = rtrim($this->options->siteUrl, '/') . '/sitemap.xml';
+            $result = $pusher->pushSitemap($sitemapUrl);
+        } else {
+            // API推送方式 - 获取指定数量的URL并推送
+            $count = isset($pluginOptions->push360PushCount) ? intval($pluginOptions->push360PushCount) : 10;
+            $count = max(1, min($count, 1000)); // 限制在1-1000之间
+            $urls = $this->getLatestUrls($count);
+
+            if (empty($urls)) {
+                $this->response->throwJson(array(
+                    'success' => false,
+                    'message' => '没有可推送的URL'
+                ));
+                return;
+            }
+
+            // 批量推送
+            $result = $pusher->pushUrls($urls);
+        }
+
+        // 返回结果
+        $this->response->throwJson($result);
     }
 } 
