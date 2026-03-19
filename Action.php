@@ -25,6 +25,10 @@ class uSitemap_Action extends Typecho_Widget implements Widget_Interface_Do
     public function action()
     {
         $this->on($this->request->is('index'))->index();
+        $this->on($this->request->is('do=baidu_manual_push'))->baiduManualPush();
+        $this->on($this->request->is('do=baidu-push'))->baiduPush();
+        $this->on($this->request->is('do=get_logs'))->getLogs();
+        $this->on($this->request->is('do=clear_logs'))->clearLogs();
     }
     
     /**
@@ -308,5 +312,315 @@ class uSitemap_Action extends Typecho_Widget implements Widget_Interface_Do
     private function xmlEncode($str)
     {
         return htmlspecialchars($str, ENT_XML1, 'UTF-8');
+    }
+
+    /**
+     * 百度推送接口
+     */
+    public function baiduPush()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用百度推送
+        if (!$pluginOptions || $pluginOptions->enableBaiduPush != '1') {
+            $this->response->setStatus(403);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => '百度推送功能未启用'
+            ));
+            return;
+        }
+
+        // 获取推送的URL
+        $url = $this->request->get('url');
+
+        if (empty($url)) {
+            $this->response->setStatus(400);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'URL参数不能为空'
+            ));
+            return;
+        }
+
+        // 创建推送实例
+        require_once __DIR__ . '/BaiduPusher.php';
+        $pusher = uSitemap_BaiduPusher::createFromPlugin($pluginOptions);
+
+        // 执行推送
+        $result = $pusher->pushUrl($url);
+
+        // 返回结果
+        $this->response->throwJson($result);
+    }
+
+    /**
+     * 百度手动推送接口（推送sitemap）
+     */
+    public function baiduManualPush()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用百度推送
+        if (!$pluginOptions || $pluginOptions->enableBaiduPush != '1') {
+            $this->response->setStatus(403);
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => '百度推送功能未启用'
+            ));
+            return;
+        }
+
+        // 获取推送类型
+        $pushType = isset($pluginOptions->baiduPushType) ? $pluginOptions->baiduPushType : 'api';
+
+        // 创建推送实例
+        require_once __DIR__ . '/BaiduPusher.php';
+        $pusher = uSitemap_BaiduPusher::createFromPlugin($pluginOptions);
+
+        $result = array();
+
+        if ($pushType === 'sitemap') {
+            // Sitemap推送方式
+            $sitemapUrl = rtrim($this->options->siteUrl, '/') . '/sitemap.xml';
+            $result = $pusher->pushSitemap($sitemapUrl);
+        } else {
+            // API推送方式 - 获取指定数量的URL并推送
+            $count = isset($pluginOptions->baiduPushCount) ? intval($pluginOptions->baiduPushCount) : 10;
+            $count = max(1, min($count, 2000)); // 限制在1-2000之间
+            $urls = $this->getLatestUrls($count);
+
+            if (empty($urls)) {
+                $this->response->throwJson(array(
+                    'success' => false,
+                    'message' => '没有可推送的URL'
+                ));
+                return;
+            }
+
+            // 批量推送
+            $result = $pusher->pushUrls($urls);
+        }
+
+        // 返回结果
+        $this->response->throwJson($result);
+    }
+
+    /**
+     * 获取最新N条URL
+     */
+    private function getLatestUrls($count)
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+        $urls = array();
+
+        // 获取排除的内容ID
+        $excludeCids = $this->parseExcludeList($pluginOptions->excludeCids);
+        $includePassword = $pluginOptions->includePassword == '1';
+
+        // 添加首页
+        if ($pluginOptions->includeIndex == '1') {
+            $urls[] = rtrim($this->options->siteUrl, '/') . '/';
+        }
+
+        // 获取最新的文章URL
+        $remaining = $count - count($urls);
+        if ($remaining > 0) {
+            $urls = array_merge($urls, $this->getPostUrls($excludeCids, $includePassword, $remaining));
+        }
+
+        return $urls;
+    }
+
+    /**
+     * 获取所有URL（用于批量推送）
+     */
+    private function getAllUrls()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+        $urls = array();
+
+        // 获取排除的内容ID
+        $excludeCids = $this->parseExcludeList($pluginOptions->excludeCids);
+        $includePassword = $pluginOptions->includePassword == '1';
+
+        // 添加首页
+        if ($pluginOptions->includeIndex == '1') {
+            $urls[] = rtrim($this->options->siteUrl, '/') . '/';
+        }
+
+        $contentTypes = is_array($pluginOptions->contentTypes) ? $pluginOptions->contentTypes : array();
+
+        // 添加文章
+        if (in_array('post', $contentTypes)) {
+            $urls = array_merge($urls, $this->getPostUrls($excludeCids, $includePassword));
+        }
+
+        // 添加独立页面
+        if (in_array('page', $contentTypes)) {
+            $urls = array_merge($urls, $this->getPageUrls($excludeCids, $includePassword));
+        }
+
+        // 添加分类
+        if (in_array('category', $contentTypes)) {
+            $urls = array_merge($urls, $this->getCategoryUrls());
+        }
+
+        // 添加标签
+        if (in_array('tag', $contentTypes)) {
+            $urls = array_merge($urls, $this->getTagUrls());
+        }
+
+        return $urls;
+    }
+
+    /**
+     * 获取文章URLs
+     */
+    private function getPostUrls($excludeCids, $includePassword, $limit = 2000)
+    {
+        $select = $this->db->select()->from('table.contents')
+            ->where('table.contents.status = ?', 'publish')
+            ->where('table.contents.type = ?', 'post')
+            ->order('table.contents.created', Typecho_Db::SORT_DESC)
+            ->limit($limit);
+
+        if (!$includePassword) {
+            $select->where('(table.contents.password IS NULL OR table.contents.password = ?)', '');
+        }
+
+        $posts = $this->db->fetchAll($select);
+        $urls = array();
+
+        foreach ($posts as $post) {
+            if (in_array($post['cid'], $excludeCids)) {
+                continue;
+            }
+
+            $urls[] = Typecho_Router::url('post', $post, $this->options->index);
+        }
+
+        return $urls;
+    }
+
+    /**
+     * 获取页面URLs
+     */
+    private function getPageUrls($excludeCids, $includePassword)
+    {
+        $select = $this->db->select()->from('table.contents')
+            ->where('table.contents.status = ?', 'publish')
+            ->where('table.contents.type = ?', 'page')
+            ->order('table.contents.created', Typecho_Db::SORT_DESC)
+            ->limit(2000);
+
+        if (!$includePassword) {
+            $select->where('(table.contents.password IS NULL OR table.contents.password = ?)', '');
+        }
+
+        $pages = $this->db->fetchAll($select);
+        $urls = array();
+
+        foreach ($pages as $page) {
+            if (in_array($page['cid'], $excludeCids)) {
+                continue;
+            }
+
+            $urls[] = Typecho_Router::url('page', $page, $this->options->index);
+        }
+
+        return $urls;
+    }
+
+    /**
+     * 获取分类URLs
+     */
+    private function getCategoryUrls()
+    {
+        $categories = $this->db->fetchAll(
+            $this->db->select()->from('table.metas')
+                ->where('table.metas.type = ?', 'category')
+                ->order('table.metas.order', Typecho_Db::SORT_ASC)
+                ->limit(2000)
+        );
+
+        $urls = array();
+
+        foreach ($categories as $category) {
+            $urls[] = Typecho_Router::url('category', $category, $this->options->index);
+        }
+
+        return $urls;
+    }
+
+    /**
+     * 获取标签URLs
+     */
+    private function getTagUrls()
+    {
+        $tags = $this->db->fetchAll(
+            $this->db->select()->from('table.metas')
+                ->where('table.metas.type = ?', 'tag')
+                ->order('table.metas.order', Typecho_Db::SORT_ASC)
+                ->limit(2000)
+        );
+
+        $urls = array();
+
+        foreach ($tags as $tag) {
+            $urls[] = Typecho_Router::url('tag', $tag, $this->options->index);
+        }
+
+        return $urls;
+    }
+
+    /**
+     * 获取推送日志
+     */
+    public function getLogs()
+    {
+        $logDir = __DIR__ . '/logs';
+        $logs = array();
+
+        if (is_dir($logDir)) {
+            $files = glob($logDir . '/baidu_push_*.log');
+            rsort($files); // 按日期倒序
+
+            foreach ($files as $file) {
+                $content = @file_get_contents($file);
+                if ($content) {
+                    $date = preg_replace('/.*baidu_push_(\d{8})\.log/', '$1', basename($file));
+                    $logs[] = array(
+                        'date' => $date,
+                        'content' => $content
+                    );
+                }
+            }
+        }
+
+        $this->response->throwJson(array(
+            'success' => true,
+            'logs' => $logs
+        ));
+    }
+
+    /**
+     * 清空推送日志
+     */
+    public function clearLogs()
+    {
+        $logDir = __DIR__ . '/logs';
+
+        if (is_dir($logDir)) {
+            $files = glob($logDir . '/baidu_push_*.log');
+            foreach ($files as $file) {
+                @unlink($file);
+            }
+        }
+
+        $this->response->throwJson(array(
+            'success' => true,
+            'message' => '日志已清空'
+        ));
     }
 } 

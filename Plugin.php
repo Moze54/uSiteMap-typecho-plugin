@@ -17,6 +17,13 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
         // 注册路由
         Helper::addRoute('sitemap', '/sitemap.xml', 'uSitemap_Action', 'index');
 
+        // 注册action
+        Helper::addAction('uSitemap', 'uSitemap_Action');
+
+        // 注册文章发布和更新钩子
+        Typecho_Plugin::factory('Widget_Contents_Post_Edit')->finishPublish = array('uSitemap_Plugin', 'pushToBaidu');
+        Typecho_Plugin::factory('Widget_Contents_Page_Edit')->finishPublish = array('uSitemap_Plugin', 'pushToBaidu');
+
         // 清除旧版本配置
         $options = Helper::options();
         $db = Typecho_Db::get();
@@ -45,7 +52,10 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
     {
         // 移除路由
         Helper::removeRoute('sitemap');
-        
+
+        // 移除action
+        Helper::removeAction('uSitemap');
+
         return '插件已禁用';
     }
     
@@ -84,28 +94,26 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
         }
         .usitemap-tabs {
             display: flex;
-            gap: 6px;
+            gap: 10px;
             margin-bottom: 20px;
             border-bottom: 2px solid #e1e4e8;
-            padding-bottom: 10px;
-            flex-wrap: nowrap;
-            overflow-x: auto;
+            padding-bottom: 15px;
+            flex-wrap: wrap;
         }
         .usitemap-tab {
-            padding: 8px 14px;
+            padding: 10px 20px;
             background: #f8f9fa;
             border: none;
-            border-radius: 6px 6px 0 0;
+            border-radius: 8px 8px 0 0;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 500;
             color: #555;
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             white-space: nowrap;
-            flex-shrink: 0;
         }
         .usitemap-tab:hover {
             background: #e9ecef;
@@ -191,13 +199,18 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                 <p>自动生成符合搜索引擎标准的 XML 站点地图，帮助搜索引擎更好地索引您的网站</p>
             </div>
 
+            <div class="usitemap-submit-area" style="margin-bottom: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px; border: 1px solid #c8e6c9; text-align: right;">
+                <button type="submit" class="btn primary">保存配置</button>
+            </div>
+
             <div class="usitemap-tabs">
-                <button class="usitemap-tab active" data-tab="sitemap">⚙️ Sitemap设置</button>
-                <button class="usitemap-tab" data-tab="baidu">📍 百度推送</button>
-                <button class="usitemap-tab" data-tab="google">🔍 Google推送</button>
-                <button class="usitemap-tab" data-tab="bing">🎯 Bing推送</button>
-                <button class="usitemap-tab" data-tab="sogou">🔍 搜狗推送</button>
-                <button class="usitemap-tab" data-tab="360">🛡️ 360推送</button>
+                <button type="button" class="usitemap-tab active" data-tab="sitemap">⚙️ Sitemap设置</button>
+                <button type="button" class="usitemap-tab" data-tab="baidu">📍 百度推送</button>
+                <button type="button" class="usitemap-tab" data-tab="google">🔍 Google推送</button>
+                <button type="button" class="usitemap-tab" data-tab="bing">🎯 Bing推送</button>
+                <button type="button" class="usitemap-tab" data-tab="sogou">🔍 搜狗推送</button>
+                <button type="button" class="usitemap-tab" data-tab="360">🛡️ 360推送</button>
+                <button type="button" class="usitemap-tab" data-tab="logs">📋 推送记录</button>
             </div>
 
             <div id="sitemap-section" class="usitemap-section active">
@@ -207,10 +220,27 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
 
             <div id="baidu-section" class="usitemap-section">
                 <div class="usitemap-section-title">📍 百度推送</div>
-                <div style="text-align: center; padding: 40px 20px; color: #999;">
-                    <div style="font-size: 48px; margin-bottom: 20px;">🚧</div>
-                    <div style="font-size: 16px; margin-bottom: 10px;">功能开发中</div>
-                    <div style="font-size: 13px;">百度搜索引擎推送功能即将上线，敬请期待</div>
+                <div id="baidu-content"></div>
+                <div class="usitemap-manual-push-area" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e1e4e8;">
+                    <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #333;">🚀 手动推送</h4>
+                    <p style="margin: 0 0 15px 0; font-size: 13px; color: #666; line-height: 1.6;">
+                        点击下方按钮将当前站点地图推送到百度搜索引擎。建议在发布新文章后手动推送以加快收录速度。
+                    </p>
+                    <button type="button" id="baidu-push-btn" class="btn-primary" style="padding: 10px 24px; background: #1976d2; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s;">
+                        立即推送
+                    </button>
+                    <div id="baidu-push-result" style="margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 13px; display: none;"></div>
+                </div>
+            </div>
+
+            <div id="logs-section" class="usitemap-section">
+                <div class="usitemap-section-title">📋 推送记录</div>
+                <div style="margin-bottom: 15px;">
+                    <button type="button" id="refresh-logs-btn" style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 13px;">刷新记录</button>
+                    <button type="button" id="clear-logs-btn" style="padding: 8px 16px; background: #fff; border: 1px solid #f44336; color: #f44336; border-radius: 4px; cursor: pointer; font-size: 13px; margin-left: 8px;">清空记录</button>
+                </div>
+                <div id="logs-content" style="background: #f8f9fa; border-radius: 8px; border: 1px solid #e1e4e8; padding: 20px; min-height: 200px; max-height: 600px; overflow-y: auto;">
+                    <div style="text-align: center; color: #999; padding: 40px;">加载中...</div>
                 </div>
             </div>
 
@@ -279,9 +309,44 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                         form.insertBefore(usitemapContainer, form.firstChild);
                     }
 
-                    // 将所有表单元素移动到sitemap-content中
+                    // 隐藏Typecho默认的提交按钮区域及其父容器
+                    var typechoFoot = form.querySelector(".typecho-foot");
+                    if (typechoFoot) {
+                        // 隐藏自身
+                        typechoFoot.style.display = "none";
+                        // 也隐藏可能的父容器（通常是一个带边框的div）
+                        if (typechoFoot.parentElement) {
+                            typechoFoot.parentElement.style.display = "none";
+                        }
+                    }
+
+                    // 隐藏typecho-option-submit元素（Typecho的提交按钮选项）
+                    var submitOption = form.querySelector(".typecho-option-submit");
+                    if (submitOption) {
+                        submitOption.style.display = "none";
+                    }
+
+                    // 隐藏表单内所有的submit按钮（除了我们自定义的那个）
+                    var allSubmitBtns = form.querySelectorAll("button[type=submit], input[type=submit]");
+                    for (var i = 0; i < allSubmitBtns.length; i++) {
+                        // 如果不是usitemap-submit-area内的按钮，则隐藏
+                        if (!allSubmitBtns[i].closest(".usitemap-submit-area")) {
+                            allSubmitBtns[i].style.display = "none";
+                            // 如果按钮的父元素只有这一个按钮，也隐藏父元素
+                            var parent = allSubmitBtns[i].parentElement;
+                            if (parent && parent.children.length === 1) {
+                                parent.style.display = "none";
+                            }
+                        }
+                    }
+
+                    // 将所有表单元素移动到sitemap-content中（排除提交按钮选项）
                     var options = document.querySelectorAll(".typecho-option");
                     for (var i = 0; i < options.length; i++) {
+                        // 跳过提交按钮选项
+                        if (options[i].classList.contains("typecho-option-submit")) {
+                            continue;
+                        }
                         sitemapContent.appendChild(options[i]);
                     }
                 }
@@ -306,6 +371,143 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                     // 添加 active 类到当前标签和对应的内容区
                     this.classList.add("active");
                     document.getElementById(targetTab + "-section").classList.add("active");
+                });
+            }
+
+            // 百度手动推送功能
+            var baiduPushBtn = document.getElementById("baidu-push-btn");
+            var baiduPushResult = document.getElementById("baidu-push-result");
+
+            if (baiduPushBtn) {
+                baiduPushBtn.addEventListener("click", function() {
+                    // 禁用按钮，显示加载状态
+                    baiduPushBtn.disabled = true;
+                    baiduPushBtn.textContent = "推送中...";
+                    baiduPushBtn.style.opacity = "0.6";
+
+                    // 显示加载提示
+                    baiduPushResult.style.display = "block";
+                    baiduPushResult.style.background = "#e3f2fd";
+                    baiduPushResult.style.color = "#1976d2";
+                    baiduPushResult.textContent = "正在推送，请稍候...";
+
+                    // 发送AJAX请求
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("POST", "' . Helper::options()->index . '/action/uSitemap?do=baidu_manual_push", true);
+                    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4) {
+                            // 恢复按钮状态
+                            baiduPushBtn.disabled = false;
+                            baiduPushBtn.textContent = "立即推送";
+                            baiduPushBtn.style.opacity = "1";
+
+                            // 显示结果
+                            baiduPushResult.style.display = "block";
+
+                            if (xhr.status === 200) {
+                                try {
+                                    var response = JSON.parse(xhr.responseText);
+
+                                    if (response.success) {
+                                        baiduPushResult.style.background = "#e8f5e9";
+                                        baiduPushResult.style.color = "#2e7d32";
+                                        baiduPushResult.textContent = "✓ " + response.message;
+                                    } else {
+                                        baiduPushResult.style.background = "#ffebee";
+                                        baiduPushResult.style.color = "#c62828";
+                                        baiduPushResult.textContent = "✗ " + response.message;
+                                    }
+                                } catch (e) {
+                                    baiduPushResult.style.background = "#ffebee";
+                                    baiduPushResult.style.color = "#c62828";
+                                    baiduPushResult.textContent = "✗ 解析响应失败: " + xhr.responseText;
+                                }
+                            } else {
+                                baiduPushResult.style.background = "#ffebee";
+                                baiduPushResult.style.color = "#c62828";
+                                baiduPushResult.textContent = "✗ 请求失败，HTTP状态码: " + xhr.status;
+                            }
+                        }
+                    };
+
+                    xhr.onerror = function() {
+                        baiduPushBtn.disabled = false;
+                        baiduPushBtn.textContent = "立即推送";
+                        baiduPushBtn.style.opacity = "1";
+
+                        baiduPushResult.style.display = "block";
+                        baiduPushResult.style.background = "#ffebee";
+                        baiduPushResult.style.color = "#c62828";
+                        baiduPushResult.textContent = "✗ 网络请求失败，请检查网络连接";
+                    };
+
+                    xhr.send();
+                });
+            }
+
+            // 推送记录功能
+            var logsContent = document.getElementById("logs-content");
+            var refreshLogsBtn = document.getElementById("refresh-logs-btn");
+            var clearLogsBtn = document.getElementById("clear-logs-btn");
+
+            function loadLogs() {
+                logsContent.innerHTML = "<div style=\"text-align: center; color: #999; padding: 40px;\">加载中...</div>";
+
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "' . Helper::options()->index . '/action/uSitemap?do=get_logs", true);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response.success && response.logs && response.logs.length > 0) {
+                                var html = "";
+                                for (var i = 0; i < response.logs.length; i++) {
+                                    var log = response.logs[i];
+                                    var dateStr = log.date.substring(0, 4) + "-" + log.date.substring(4, 6) + "-" + log.date.substring(6, 8);
+                                    html += "<div style=\"margin-bottom: 15px; padding: 12px; background: #fff; border-radius: 6px; border: 1px solid #e1e4e8;\">";
+                                    html += "<div style=\"font-weight: 600; color: #1976d2; margin-bottom: 8px;\">📅 " + dateStr + "</div>";
+                                    html += "<pre style=\"margin: 0; font-size: 12px; color: #333; white-space: pre-wrap; word-break: break-all;\">" + log.content + "</pre>";
+                                    html += "</div>";
+                                }
+                                logsContent.innerHTML = html;
+                            } else {
+                                logsContent.innerHTML = "<div style=\"text-align: center; color: #999; padding: 40px;\">暂无推送记录</div>";
+                            }
+                        } catch (e) {
+                            logsContent.innerHTML = "<div style=\"text-align: center; color: #c62828; padding: 40px;\">加载失败</div>";
+                        }
+                    }
+                };
+                xhr.send();
+            }
+
+            if (refreshLogsBtn) {
+                refreshLogsBtn.addEventListener("click", loadLogs);
+            }
+
+            if (clearLogsBtn) {
+                clearLogsBtn.addEventListener("click", function() {
+                    if (!confirm("确定要清空所有推送记录吗？")) return;
+
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", "' . Helper::options()->index . '/action/uSitemap?do=clear_logs", true);
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            loadLogs();
+                        }
+                    };
+                    xhr.send();
+                });
+            }
+
+            // 点击推送记录标签时加载
+            var logsTab = document.querySelector("[data-tab=logs]");
+            if (logsTab) {
+                logsTab.addEventListener("click", function() {
+                    setTimeout(loadLogs, 100);
                 });
             }
         });
@@ -395,6 +597,101 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
         );
         $maxItems->input->setAttribute('class', 'mini');
         $form->addInput($maxItems);
+
+        // ========== 百度推送配置 ==========
+
+        /** 启用百度推送 */
+        $enableBaiduPush = new Typecho_Widget_Helper_Form_Element_Radio(
+            'enableBaiduPush',
+            array('1' => _t('启用'), '0' => _t('禁用')),
+            '0',
+            _t('启用百度推送'),
+            _t('开启后，文章发布/更新时会自动推送到百度搜索引擎')
+        );
+        $form->addInput($enableBaiduPush);
+
+        /** 百度站点验证token */
+        $baiduSite = new Typecho_Widget_Helper_Form_Element_Text(
+            'baiduSite',
+            NULL,
+            '',
+            _t('百度站点'),
+            _t('百度站长平台中验证的站点域名，如：example.com')
+        );
+        $form->addInput($baiduSite);
+
+        /** 百度推送token */
+        $baiduToken = new Typecho_Widget_Helper_Form_Element_Text(
+            'baiduToken',
+            NULL,
+            '',
+            _t('百度推送Token'),
+            _t('在百度站长平台「普通收录」-「资源提交」-「普通收录」中获取的推送接口令牌')
+        );
+        $form->addInput($baiduToken);
+
+        /** 推送类型 */
+        $baiduPushType = new Typecho_Widget_Helper_Form_Element_Radio(
+            'baiduPushType',
+            array('api' => _t('API推送'), 'sitemap' => _t('Sitemap推送')),
+            'api',
+            _t('推送方式'),
+            _t('API推送：实时推送单个URL，速度更快<br />Sitemap推送：推送sitemap地址，批量提交')
+        );
+        $form->addInput($baiduPushType);
+
+        /** 自动推送触发时机 */
+        $baiduPushTrigger = new Typecho_Widget_Helper_Form_Element_Checkbox(
+            'baiduPushTrigger',
+            array(
+                'publish' => _t('发布文章时'),
+                'update' => _t('更新文章时')
+            ),
+            array('publish', 'update'),
+            _t('自动推送触发'),
+            _t('选择何时自动推送到百度')
+        );
+        $form->addInput($baiduPushTrigger->multiMode());
+
+        /** 手动推送数量 */
+        $baiduPushCount = new Typecho_Widget_Helper_Form_Element_Text(
+            'baiduPushCount',
+            NULL,
+            '10',
+            _t('手动推送数量'),
+            _t('手动推送时推送最新的N条内容，建议不超过100条')
+        );
+        $baiduPushCount->input->setAttribute('class', 'mini');
+        $form->addInput($baiduPushCount);
+
+        echo '<script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(function() {
+                var baiduContent = document.getElementById("baidu-content");
+                if (baiduContent) {
+                    // 将百度推送相关配置项移动到百度标签页
+                    var baiduOptions = [];
+                    var options = document.querySelectorAll(".typecho-option");
+                    for (var i = 0; i < options.length; i++) {
+                        var label = options[i].querySelector("label");
+                        if (label && (
+                            label.textContent.includes("百度推送") ||
+                            label.textContent.includes("百度站点") ||
+                            label.textContent.includes("百度推送Token") ||
+                            label.textContent.includes("推送方式") ||
+                            label.textContent.includes("自动推送触发") ||
+                            label.textContent.includes("手动推送数量")
+                        )) {
+                            baiduOptions.push(options[i]);
+                        }
+                    }
+                    for (var j = 0; j < baiduOptions.length; j++) {
+                        baiduContent.appendChild(baiduOptions[j]);
+                    }
+                }
+            }, 150);
+        });
+        </script>';
     }
     
     /**
@@ -402,5 +699,81 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
      */
     public static function personalConfig(Typecho_Widget_Helper_Form $form)
     {
+    }
+
+    /**
+     * 文章/页面发布后推送到百度
+     *
+     * @param array $contents 文章内容数组
+     * @param Widget_Contents_Post_Edit $widget 发布组件
+     * @return void
+     */
+    public static function pushToBaidu($contents, $widget)
+    {
+        $options = Helper::options();
+        $pluginOptions = $options->plugin('uSitemap');
+
+        // 检查是否启用百度推送
+        if (!$pluginOptions || $pluginOptions->enableBaiduPush != '1') {
+            return;
+        }
+
+        // 检查配置是否完整
+        if (empty($pluginOptions->baiduSite) || empty($pluginOptions->baiduToken)) {
+            return;
+        }
+
+        // 检查触发条件
+        $triggers = isset($pluginOptions->baiduPushTrigger) ? $pluginOptions->baiduPushTrigger : array();
+
+        // 判断是新发布还是更新（created大于当前时间-60秒视为新发布）
+        $isNewPublish = isset($contents['created']) && $contents['created'] >= time() - 60;
+
+        // 检查是否应该触发推送
+        $shouldPush = false;
+        if ($isNewPublish && in_array('publish', $triggers)) {
+            // 新发布
+            $shouldPush = true;
+        } elseif (!$isNewPublish && in_array('update', $triggers)) {
+            // 更新
+            $shouldPush = true;
+        }
+
+        if (!$shouldPush) {
+            return;
+        }
+
+        // 获取文章URL
+        $permalink = $widget->permalink;
+
+        if (empty($permalink)) {
+            return;
+        }
+
+        // 引入推送类
+        require_once __DIR__ . '/BaiduPusher.php';
+
+        // 创建推送实例
+        $pusher = uSitemap_BaiduPusher::createFromPlugin($pluginOptions);
+
+        // 执行推送
+        $pushType = isset($pluginOptions->baiduPushType) ? $pluginOptions->baiduPushType : 'api';
+
+        if ($pushType === 'sitemap') {
+            // Sitemap推送方式 - 不在这里推送，因为sitemap需要定时更新
+            return;
+        }
+
+        // API推送方式 - 推送单个URL
+        try {
+            $result = $pusher->pushUrl($permalink);
+
+            // 记录推送结果到日志
+            if (!$result['success']) {
+                error_log('uSitemap百度推送失败: ' . $result['message']);
+            }
+        } catch (Exception $e) {
+            error_log('uSitemap百度推送异常: ' . $e->getMessage());
+        }
     }
 } 
