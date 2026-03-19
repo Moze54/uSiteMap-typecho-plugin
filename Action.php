@@ -12,7 +12,7 @@ function update($function, $web)
 	//首页
 	$index = Helper::options()->siteUrl;
 	$index_result = $index_result . "\t<url>\n";
-	$index_result = $index_result . "\t\t<loc>" . $index . "</loc>\n";
+	$index_result = $index_result . "\t\t<loc>" . htmlspecialchars($index, ENT_XML1, 'UTF-8') . "</loc>\n";
 	$index_result = $index_result . "\t\t<changefreq>always</changefreq>\n";
 	$index_result = $index_result . "\t\t<priority>1</priority>\n";
 	$index_result = $index_result . "\t</url>\n";
@@ -28,7 +28,7 @@ function update($function, $web)
 		$page['pathinfo'] = $routeExists ? Typecho_Router::url($type, $page) : '#';
 		$page['permalink'] = Typecho_Common::url($page['pathinfo'], $options->index);
 		$page_result = $page_result . "\t<url>\n";
-		$page_result = $page_result . "\t\t<loc>" . $page['permalink'] . "</loc>\n";
+		$page_result = $page_result . "\t\t<loc>" . htmlspecialchars($page['permalink'], ENT_XML1, 'UTF-8') . "</loc>\n";
 		$page_result = $page_result . "\t\t<lastmod>" . date('Y-m-d', $page['modified']) . "</lastmod>\n";
 		$page_result = $page_result . "\t\t<changefreq>always</changefreq>\n";
 		$page_result = $page_result . "\t\t<priority>0.8</priority>\n";
@@ -39,7 +39,7 @@ function update($function, $web)
 		->where('table.metas.type = ?', 'category'));
 	foreach ($categorys as $category) {
 		$category_result = $category_result . "\t<url>\n";
-		$category_result = $category_result . "\t\t<loc>" . getPermalinkCategory($category) . "</loc>\n";
+		$category_result = $category_result . "\t\t<loc>" . htmlspecialchars(getPermalinkCategory($category), ENT_XML1, 'UTF-8') . "</loc>\n";
 		$category_result = $category_result . "\t\t<changefreq>always</changefreq>\n";
 		$category_result = $category_result . "\t\t<priority>0.5</priority>\n";
 		$category_result = $category_result . "\t</url>\n";
@@ -52,7 +52,7 @@ function update($function, $web)
 		->order('table.contents.created', Typecho_Db::SORT_DESC));
 	foreach ($archives as $archive) {
 		$archive_result = $archive_result . "\t<url>\n";
-		$archive_result = $archive_result . "\t\t<loc>" . getPermalink($archive['cid']) . "</loc>\n";
+		$archive_result = $archive_result . "\t\t<loc>" . htmlspecialchars(getPermalink($archive['cid']), ENT_XML1, 'UTF-8') . "</loc>\n";
 		$archive_result = $archive_result . "\t\t<lastmod>" . date('Y-m-d', $archive['modified']) . "</lastmod>\n";
 		$archive_result = $archive_result . "\t\t<changefreq>always</changefreq>\n";
 		$archive_result = $archive_result . "\t\t<priority>0.8</priority>\n";
@@ -67,7 +67,7 @@ function update($function, $web)
 		$tag['pathinfo'] = $routeExists ? Typecho_Router::url($type, $tag) : '#';
 		$tag['permalink'] = Typecho_Common::url($tag['pathinfo'], $options->index);
 		$tag_result = $tag_result . "\t<url>\n";
-		$tag_result = $tag_result . "\t\t<loc>" . $tag['permalink'] . "</loc>\n";
+		$tag_result = $tag_result . "\t\t<loc>" . htmlspecialchars($tag['permalink'], ENT_XML1, 'UTF-8') . "</loc>\n";
 		$tag_result = $tag_result . "\t\t<changefreq>always</changefreq>\n";
 		$tag_result = $tag_result . "\t\t<priority>0.5</priority>\n";
 		$tag_result = $tag_result . "\t</url>\n";
