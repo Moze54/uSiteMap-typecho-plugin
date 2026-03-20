@@ -1,6 +1,6 @@
 # Typecho uSitemap 插件
 
-自动生成符合标准的 XML 网站地图，支持多搜索引擎推送，帮助搜索引擎更好地索引您的网站内容。
+自动生成符合标准的 XML 网站地图，支持百度和必应搜索引擎推送，帮助搜索引擎更好地索引您的网站内容。
 
 ## ✨ 功能特性
 
@@ -15,10 +15,7 @@
 
 ### 搜索引擎推送
 - 📍 **百度推送** - 支持API推送和Sitemap推送两种方式
-- 🔍 **Google推送** - 基于Indexing API实现
 - 🎯 **Bing推送** - 支持API批量推送
-- 🔍 **搜狗推送** - 支持API和Sitemap推送
-- 🛡️ **360推送** - 支持API和Sitemap推送
 - 🤖 **自动推送** - 文章发布/更新时自动推送到搜索引擎
 - 📊 **推送日志** - 详细的推送记录，便于追踪推送状态
 - 🎛️ **灵活配置** - 可自定义推送时机和推送数量
@@ -81,19 +78,6 @@
 - **自动推送触发**：可选择在发布文章时或更新文章时推送
 - **手动推送数量**：手动推送时推送的最新N条内容
 
-#### Google推送
-- **启用Google推送**：开启后，文章发布/更新时会自动推送到Google
-- **Google API密钥**：在Google Cloud Console中创建的API密钥，用于Indexing API
-- **自动推送触发**：可选择在发布文章时或更新文章时推送
-- **手动推送数量**：手动推送时推送的最新N条内容
-
-**获取Google API密钥步骤**：
-1. 访问 [Google Cloud Console](https://console.cloud.google.com/)
-2. 创建新项目或选择现有项目
-3. 启用「Indexing API」
-4. 创建服务账号并下载JSON密钥文件
-5. 在 [Google Search Console](https://search.google.com/search-console) 中验证网站并添加服务账号为资源所有者
-
 #### Bing推送
 - **启用Bing推送**：开启后，文章发布/更新时会自动推送到Bing
 - **Bing API密钥**：在Bing Webmaster Tools中获取的API密钥
@@ -106,21 +90,6 @@
 2. 登录并验证网站所有权
 3. 进入「API Access」-「API Key」
 4. 点击「Generate API Key」生成API密钥
-
-#### 搜狗推送
-- **启用搜狗推送**：开启后，文章发布/更新时会自动推送到搜狗
-- **搜狗推送Token**：在搜狗站长平台中获取的推送接口令牌
-- **推送方式**：支持API推送和Sitemap推送两种方式
-- **自动推送触发**：可选择在发布文章时或更新文章时推送
-- **手动推送数量**：手动推送时推送的最新N条内容
-
-#### 360推送
-- **启用360推送**：开启后，文章发布/更新时会自动推送到360
-- **360站点**：360站长平台中验证的站点域名
-- **360推送Token**：在360站长平台中获取的推送接口令牌
-- **推送方式**：支持API推送和Sitemap推送两种方式
-- **自动推送触发**：可选择在发布文章时或更新文章时推送
-- **手动推送数量**：手动推送时推送的最新N条内容
 
 ## 📝 使用方法
 
@@ -161,16 +130,6 @@ https://your-domain.com/sitemap.xml
 #### 百度搜索资源平台
 1. 登录 [百度搜索资源平台](https://ziyuan.baidu.com)
 2. 选择「普通收录」→「sitemap」
-3. 提交您的 sitemap 地址
-
-#### 搜狗站长平台
-1. 登录 [搜狗站长平台](http://zhanzhang.sogou.com)
-2. 进入「网页收录」-「Sitemap」
-3. 提交您的 sitemap 地址
-
-#### 360站长平台
-1. 登录 [360站长平台](http://zhanzhang.so.com)
-2. 进入「网页收录」-「Sitemap」
 3. 提交您的 sitemap 地址
 
 ### robots.txt 配置
@@ -284,10 +243,7 @@ Sitemap: https://your-domain.com/sitemap.xml
 
 #### 推送限制
 - 百度API：单次最多2000条
-- Google API：单次最多1000条
 - Bing API：逐个推送
-- 搜狗API：单次最多1000条
-- 360API：单次最多1000条
 
 ## ❓ 常见问题
 
@@ -322,22 +278,16 @@ Sitemap: https://your-domain.com/sitemap.xml
 - 查看推送记录中的错误信息
 - 检查服务器网络连接是否正常
 
-#### 7. 为什么Google推送需要服务账号？
-Google的Indexing API需要使用OAuth 2.0认证，必须创建服务账号并授权。
-
-#### 8. 推送次数有限制吗？
+#### 7. 推送次数有限制吗？
 各搜索引擎对API推送都有配额限制：
 - 百度：每天最多10万次
-- Google：每天最多600次（可通过申请增加）
 - Bing：每天最多2000次
-- 搜狗：每天最多10万次
-- 360：每天最多10万次
 
-#### 9. 自动推送和手动推送有什么区别？
+#### 8. 自动推送和手动推送有什么区别？
 - **自动推送**：文章发布/更新时自动触发，无需手动操作
 - **手动推送**：主动推送最新的N条URL，适合批量推送历史内容
 
-#### 10. 推送日志保存在哪里？
+#### 9. 推送日志保存在哪里？
 推送日志保存在 `usr/plugins/uSitemap/logs/` 目录下，按日期和搜索引擎分类存储。
 
 ## 🔧 高级用法
@@ -380,8 +330,6 @@ Helper::addRoute('sitemap', '/your-custom-path.xml', 'uSitemap_Action', 'index')
 
 本插件严格遵循以下规范：
 - [Sitemap 协议 0.9](https://www.sitemaps.org/protocol.html)
-- [Google Sitemap 指南](https://developers.google.com/search/docs/advanced/sitemaps/overview)
-- [Google Indexing API](https://developers.google.com/webmaster-tools/v3/how-tos/search-console/indexing-api)
 - [Bing Webmaster API](https://docs.microsoft.com/en-us/bing/webmaster-tools/)
 - [W3C Datetime 格式](https://www.w3.org/TR/NOTE-datetime)
 
@@ -390,14 +338,10 @@ Helper::addRoute('sitemap', '/your-custom-path.xml', 'uSitemap_Action', 'index')
 ### 官方平台
 - [Typecho 官网](http://typecho.org)
 - [Sitemap 协议官网](https://www.sitemaps.org)
-- [Google Search Console](https://search.google.com/search-console)
 - [Bing Webmaster Tools](https://www.bing.com/webmasters)
 - [百度搜索资源平台](https://ziyuan.baidu.com)
-- [搜狗站长平台](http://zhanzhang.sogou.com)
-- [360站长平台](http://zhanzhang.so.com)
 
 ### 开发文档
-- [Google Indexing API](https://developers.google.com/webmaster-tools/v3/how-tos/search-console/indexing-api)
 - [Bing Submit URL API](https://docs.microsoft.com/en-us/bing/webmaster-tools/submit-url-api)
 - [百度推送接口](https://ziyuan.baidu.com/wiki/last调用)
 
@@ -406,10 +350,7 @@ Helper::addRoute('sitemap', '/your-custom-path.xml', 'uSitemap_Action', 'index')
 ### 2.0.0 (2025-03-19)
 - 🎉 **重大更新** - 新增多搜索引擎推送功能
 - ✅ **百度推送** - 支持API推送和Sitemap推送两种方式
-- ✅ **Google推送** - 基于Indexing API实现
 - ✅ **Bing推送** - 支持API批量推送
-- ✅ **搜狗推送** - 支持API和Sitemap推送
-- ✅ **360推送** - 支持API和Sitemap推送
 - 🤖 **自动推送** - 文章发布/更新时自动推送
 - 📊 **推送日志** - 详细的推送记录功能
 - 🎨 **界面优化** - 全新的标签页式配置界面
@@ -438,17 +379,11 @@ uSitemap/
 ├── Plugin.php              # 插件主文件
 ├── Action.php              # 动作类，处理Sitemap生成和推送
 ├── BaiduPusher.php         # 百度推送类
-├── GooglePusher.php        # Google推送类
 ├── BingPusher.php          # Bing推送类
-├── SogouPusher.php         # 搜狗推送类
-├── Push360Pusher.php       # 360推送类
 ├── SearchEnginePusher.php  # 搜索引擎推送基类
 ├── logs/                   # 推送日志目录
 │   ├── baidu_push_*.log
-│   ├── google_push_*.log
-│   ├── bing_push_*.log
-│   ├── sogou_push_*.log
-│   └── 360_push_*.log
+│   └── bing_push_*.log
 └── README.md               # 说明文档
 ```
 

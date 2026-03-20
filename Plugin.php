@@ -209,16 +209,13 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
         <div class="usitemap-container">
             <div class="usitemap-header">
                 <h2>🗺️ uSitemap</h2>
-                <p>自动生成 XML 站点地图，支持多搜索引擎推送</p>
+                <p>自动生成 XML 站点地图，支持百度和必应推送</p>
             </div>
 
             <div class="usitemap-tabs">
                 <button type="button" class="usitemap-tab active" data-tab="sitemap">⚙️ Sitemap设置</button>
                 <button type="button" class="usitemap-tab" data-tab="baidu">📍 百度推送</button>
-                <button type="button" class="usitemap-tab" data-tab="google">🔍 Google推送</button>
                 <button type="button" class="usitemap-tab" data-tab="bing">🎯 Bing推送</button>
-                <button type="button" class="usitemap-tab" data-tab="sogou">🔍 搜狗推送</button>
-                <button type="button" class="usitemap-tab" data-tab="360">🛡️ 360推送</button>
                 <button type="button" class="usitemap-tab" data-tab="logs">📋 推送记录</button>
             </div>
 
@@ -276,31 +273,6 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                 </div>
             </div>
 
-            <div id="google-section" class="usitemap-section">
-                <div class="usitemap-section-title">🔍 Google推送</div>
-                <div id="google-content"></div>
-                <div style="margin-top: 30px; padding: 20px; background: #e8f0fe; border-left: 4px solid #4285f4; border-radius: 8px;">
-                    <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #1967d2;">💡 如何获取Google推送配置</h4>
-                    <ol style="margin: 0; padding-left: 20px; color: #1967d2; font-size: 13px; line-height: 2;">
-                        <li>访问 <a href="https://console.cloud.google.com/" target="_blank" style="color: #1976d2; text-decoration: underline;">Google Cloud Console</a></li>
-                        <li>创建新项目或选择现有项目</li>
-                        <li>启用「Indexing API」</li>
-                        <li>创建服务账号并下载JSON密钥文件</li>
-                        <li>在 <a href="https://search.google.com/search-console" target="_blank" style="color: #1976d2; text-decoration: underline;">Google Search Console</a> 中验证网站并添加服务账号为资源所有者</li>
-                    </ol>
-                </div>
-                <div class="usitemap-manual-push-area" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e1e4e8;">
-                    <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #333;">🚀 手动推送</h4>
-                    <p style="margin: 0 0 15px 0; font-size: 13px; color: #666; line-height: 1.6;">
-                        点击下方按钮将当前站点地图推送到Google搜索引擎。建议在发布新文章后手动推送以加快收录速度。
-                    </p>
-                    <button type="button" id="google-push-btn" class="btn-primary" style="padding: 10px 24px; background: #4285f4; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s;">
-                        立即推送
-                    </button>
-                    <div id="google-push-result" style="margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 13px; display: none;"></div>
-                </div>
-            </div>
-
             <div id="bing-section" class="usitemap-section">
                 <div class="usitemap-section-title">🎯 Bing推送</div>
                 <div id="bing-content"></div>
@@ -323,56 +295,6 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                         立即推送
                     </button>
                     <div id="bing-push-result" style="margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 13px; display: none;"></div>
-                </div>
-            </div>
-
-            <div id="sogou-section" class="usitemap-section">
-                <div class="usitemap-section-title">🔍 搜狗推送</div>
-                <div id="sogou-content"></div>
-                <div style="margin-top: 30px; padding: 20px; background: #fff3e0; border-left: 4px solid #ff6900; border-radius: 8px;">
-                    <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #e65100;">💡 如何获取搜狗推送配置</h4>
-                    <ol style="margin: 0; padding-left: 20px; color: #e65100; font-size: 13px; line-height: 2;">
-                        <li>访问 <a href="http://zhanzhang.sogou.com/" target="_blank" style="color: #1976d2; text-decoration: underline;">搜狗站长平台</a></li>
-                        <li>登录并验证网站所有权</li>
-                        <li>进入「网页收录」-「API推送」</li>
-                        <li>复制推送接口令牌(Token)</li>
-                        <li>选择推送方式（API推送或Sitemap推送）</li>
-                    </ol>
-                </div>
-                <div class="usitemap-manual-push-area" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e1e4e8;">
-                    <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #333;">🚀 手动推送</h4>
-                    <p style="margin: 0 0 15px 0; font-size: 13px; color: #666; line-height: 1.6;">
-                        点击下方按钮将当前站点地图推送到搜狗搜索引擎。建议在发布新文章后手动推送以加快收录速度。
-                    </p>
-                    <button type="button" id="sogou-push-btn" class="btn-primary" style="padding: 10px 24px; background: #ff6900; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s;">
-                        立即推送
-                    </button>
-                    <div id="sogou-push-result" style="margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 13px; display: none;"></div>
-                </div>
-            </div>
-
-            <div id="360-section" class="usitemap-section">
-                <div class="usitemap-section-title">🛡️ 360推送</div>
-                <div id="360-content"></div>
-                <div style="margin-top: 30px; padding: 20px; background: #e8f5e9; border-left: 4px solid #19b955; border-radius: 8px;">
-                    <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #1b5e20;">💡 如何获取360推送配置</h4>
-                    <ol style="margin: 0; padding-left: 20px; color: #1b5e20; font-size: 13px; line-height: 2;">
-                        <li>访问 <a href="http://zhanzhang.so.com/" target="_blank" style="color: #1976d2; text-decoration: underline;">360站长平台</a></li>
-                        <li>登录并验证网站所有权</li>
-                        <li>进入「网页收录」-「API推送」</li>
-                        <li>复制推送接口令牌(Token)</li>
-                        <li>填写已验证的站点域名</li>
-                    </ol>
-                </div>
-                <div class="usitemap-manual-push-area" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e1e4e8;">
-                    <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #333;">🚀 手动推送</h4>
-                    <p style="margin: 0 0 15px 0; font-size: 13px; color: #666; line-height: 1.6;">
-                        点击下方按钮将当前站点地图推送到360搜索引擎。建议在发布新文章后手动推送以加快收录速度。
-                    </p>
-                    <button type="button" id="360-push-btn" class="btn-primary" style="padding: 10px 24px; background: #19b955; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s;">
-                        立即推送
-                    </button>
-                    <div id="360-push-result" style="margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 13px; display: none;"></div>
                 </div>
             </div>
         </div>
@@ -610,11 +532,8 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                 }
             }
 
-            // 设置其他搜索引擎的推送按钮
-            setupPushButton("google-push-btn", "google-push-result", "google_manual_push");
+            // 设置Bing推送按钮
             setupPushButton("bing-push-btn", "bing-push-result", "bing_manual_push");
-            setupPushButton("sogou-push-btn", "sogou-push-result", "sogou_manual_push");
-            setupPushButton("360-push-btn", "360-push-result", "360_manual_push");
 
             // 推送记录功能
             var logsContent = document.getElementById("logs-content");
@@ -832,52 +751,6 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
         $baiduPushCount->input->setAttribute('class', 'mini');
         $form->addInput($baiduPushCount);
 
-        // ========== Google推送配置 ==========
-
-        /** 启用Google推送 */
-        $enableGooglePush = new Typecho_Widget_Helper_Form_Element_Radio(
-            'enableGooglePush',
-            array('1' => _t('启用'), '0' => _t('禁用')),
-            '0',
-            _t('启用Google推送'),
-            _t('开启后，文章发布/更新时会自动推送到Google搜索引擎')
-        );
-        $form->addInput($enableGooglePush);
-
-        /** Google API密钥 */
-        $googleApiKey = new Typecho_Widget_Helper_Form_Element_Text(
-            'googleApiKey',
-            NULL,
-            '',
-            _t('Google API密钥'),
-            _t('在Google Cloud Console中创建的API密钥，用于Indexing API')
-        );
-        $form->addInput($googleApiKey);
-
-        /** 自动推送触发时机 */
-        $googlePushTrigger = new Typecho_Widget_Helper_Form_Element_Checkbox(
-            'googlePushTrigger',
-            array(
-                'publish' => _t('发布文章时'),
-                'update' => _t('更新文章时')
-            ),
-            array('publish'),
-            _t('自动推送触发'),
-            _t('选择何时自动推送到Google')
-        );
-        $form->addInput($googlePushTrigger->multiMode());
-
-        /** 手动推送数量 */
-        $googlePushCount = new Typecho_Widget_Helper_Form_Element_Text(
-            'googlePushCount',
-            NULL,
-            '10',
-            _t('手动推送数量'),
-            _t('手动推送时推送最新的N条内容，建议不超过100条')
-        );
-        $googlePushCount->input->setAttribute('class', 'mini');
-        $form->addInput($googlePushCount);
-
         // ========== Bing推送配置 ==========
 
         /** 启用Bing推送 */
@@ -934,137 +807,12 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
         $bingPushCount->input->setAttribute('class', 'mini');
         $form->addInput($bingPushCount);
 
-        // ========== 搜狗推送配置 ==========
-
-        /** 启用搜狗推送 */
-        $enableSogouPush = new Typecho_Widget_Helper_Form_Element_Radio(
-            'enableSogouPush',
-            array('1' => _t('启用'), '0' => _t('禁用')),
-            '0',
-            _t('启用搜狗推送'),
-            _t('开启后，文章发布/更新时会自动推送到搜狗搜索引擎')
-        );
-        $form->addInput($enableSogouPush);
-
-        /** 搜狗推送Token */
-        $sogouToken = new Typecho_Widget_Helper_Form_Element_Text(
-            'sogouToken',
-            NULL,
-            '',
-            _t('搜狗推送Token'),
-            _t('在搜狗站长平台中获取的推送接口令牌')
-        );
-        $form->addInput($sogouToken);
-
-        /** 推送类型 */
-        $sogouPushType = new Typecho_Widget_Helper_Form_Element_Radio(
-            'sogouPushType',
-            array('api' => _t('API推送'), 'sitemap' => _t('Sitemap推送')),
-            'api',
-            _t('推送方式'),
-            _t('API推送：实时推送单个URL，速度更快<br />Sitemap推送：推送sitemap地址，批量提交')
-        );
-        $form->addInput($sogouPushType);
-
-        /** 自动推送触发时机 */
-        $sogouPushTrigger = new Typecho_Widget_Helper_Form_Element_Checkbox(
-            'sogouPushTrigger',
-            array(
-                'publish' => _t('发布文章时'),
-                'update' => _t('更新文章时')
-            ),
-            array('publish', 'update'),
-            _t('自动推送触发'),
-            _t('选择何时自动推送到搜狗')
-        );
-        $form->addInput($sogouPushTrigger->multiMode());
-
-        /** 手动推送数量 */
-        $sogouPushCount = new Typecho_Widget_Helper_Form_Element_Text(
-            'sogouPushCount',
-            NULL,
-            '10',
-            _t('手动推送数量'),
-            _t('手动推送时推送最新的N条内容，建议不超过100条')
-        );
-        $sogouPushCount->input->setAttribute('class', 'mini');
-        $form->addInput($sogouPushCount);
-
-        // ========== 360推送配置 ==========
-
-        /** 启用360推送 */
-        $enablePush360Push = new Typecho_Widget_Helper_Form_Element_Radio(
-            'enablePush360Push',
-            array('1' => _t('启用'), '0' => _t('禁用')),
-            '0',
-            _t('启用360推送'),
-            _t('开启后，文章发布/更新时会自动推送到360搜索引擎')
-        );
-        $form->addInput($enablePush360Push);
-
-        /** 360站点 */
-        $push360Site = new Typecho_Widget_Helper_Form_Element_Text(
-            'push360Site',
-            NULL,
-            '',
-            _t('360站点'),
-            _t('360站长平台中验证的站点域名，如：example.com')
-        );
-        $form->addInput($push360Site);
-
-        /** 360推送Token */
-        $push360Token = new Typecho_Widget_Helper_Form_Element_Text(
-            'push360Token',
-            NULL,
-            '',
-            _t('360推送Token'),
-            _t('在360站长平台中获取的推送接口令牌')
-        );
-        $form->addInput($push360Token);
-
-        /** 推送类型 */
-        $push360PushType = new Typecho_Widget_Helper_Form_Element_Radio(
-            'push360PushType',
-            array('api' => _t('API推送'), 'sitemap' => _t('Sitemap推送')),
-            'api',
-            _t('推送方式'),
-            _t('API推送：实时推送单个URL，速度更快<br />Sitemap推送：推送sitemap地址，批量提交')
-        );
-        $form->addInput($push360PushType);
-
-        /** 自动推送触发时机 */
-        $push360PushTrigger = new Typecho_Widget_Helper_Form_Element_Checkbox(
-            'push360PushTrigger',
-            array(
-                'publish' => _t('发布文章时'),
-                'update' => _t('更新文章时')
-            ),
-            array('publish', 'update'),
-            _t('自动推送触发'),
-            _t('选择何时自动推送到360')
-        );
-        $form->addInput($push360PushTrigger->multiMode());
-
-        /** 手动推送数量 */
-        $push360PushCount = new Typecho_Widget_Helper_Form_Element_Text(
-            'push360PushCount',
-            NULL,
-            '10',
-            _t('手动推送数量'),
-            _t('手动推送时推送最新的N条内容，建议不超过100条')
-        );
-        $push360PushCount->input->setAttribute('class', 'mini');
-        $form->addInput($push360PushCount);
-
         echo '<script>
         document.addEventListener("DOMContentLoaded", function() {
             setTimeout(function() {
                 // 将配置项移动到对应的标签页
                 var baiduContent = document.getElementById("baidu-content");
-                var googleContent = document.getElementById("google-content");
                 var bingContent = document.getElementById("bing-content");
-                var sogouContent = document.getElementById("sogou-content");
-                var push360Content = document.getElementById("360-content");
 
                 if (baiduContent) {
                     var baiduOptions = [];
@@ -1087,24 +835,6 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                     }
                 }
 
-                if (googleContent) {
-                    var googleOptions = [];
-                    var options = document.querySelectorAll(".typecho-option");
-                    for (var i = 0; i < options.length; i++) {
-                        var label = options[i].querySelector("label");
-                        if (label && (
-                            label.textContent.includes("Google推送") ||
-                            label.textContent.includes("Google API密钥") ||
-                            (label.textContent.includes("自动推送触发") && options[i].innerHTML.includes("googlePushTrigger"))
-                        )) {
-                            googleOptions.push(options[i]);
-                        }
-                    }
-                    for (var j = 0; j < googleOptions.length; j++) {
-                        googleContent.appendChild(googleOptions[j]);
-                    }
-                }
-
                 if (bingContent) {
                     var bingOptions = [];
                     var options = document.querySelectorAll(".typecho-option");
@@ -1120,41 +850,6 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                     }
                     for (var j = 0; j < bingOptions.length; j++) {
                         bingContent.appendChild(bingOptions[j]);
-                    }
-                }
-
-                if (sogouContent) {
-                    var sogouOptions = [];
-                    var options = document.querySelectorAll(".typecho-option");
-                    for (var i = 0; i < options.length; i++) {
-                        var label = options[i].querySelector("label");
-                        if (label && (
-                            label.textContent.includes("搜狗推送") ||
-                            label.textContent.includes("搜狗推送Token")
-                        )) {
-                            sogouOptions.push(options[i]);
-                        }
-                    }
-                    for (var j = 0; j < sogouOptions.length; j++) {
-                        sogouContent.appendChild(sogouOptions[j]);
-                    }
-                }
-
-                if (push360Content) {
-                    var push360Options = [];
-                    var options = document.querySelectorAll(".typecho-option");
-                    for (var i = 0; i < options.length; i++) {
-                        var label = options[i].querySelector("label");
-                        if (label && (
-                            label.textContent.includes("360推送") ||
-                            label.textContent.includes("360站点") ||
-                            label.textContent.includes("360推送Token")
-                        )) {
-                            push360Options.push(options[i]);
-                        }
-                    }
-                    for (var j = 0; j < push360Options.length; j++) {
-                        push360Content.appendChild(push360Options[j]);
                     }
                 }
             }, 150);
@@ -1194,17 +889,8 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
         // 推送到百度
         self::pushToSearchEngine('baidu', $pluginOptions, $permalink, $isNewPublish);
 
-        // 推送到Google
-        self::pushToSearchEngine('google', $pluginOptions, $permalink, $isNewPublish);
-
         // 推送到Bing
         self::pushToSearchEngine('bing', $pluginOptions, $permalink, $isNewPublish);
-
-        // 推送到搜狗
-        self::pushToSearchEngine('sogou', $pluginOptions, $permalink, $isNewPublish);
-
-        // 推送到360
-        self::pushToSearchEngine('360', $pluginOptions, $permalink, $isNewPublish);
     }
 
     /**
