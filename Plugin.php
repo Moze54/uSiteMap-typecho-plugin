@@ -1003,6 +1003,29 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                 });
             }
 
+            // 自动检查并重新生成验证文件
+            // 如果验证文件被手动删除，这里会自动重新创建
+            var keyInput = document.querySelector("input[name=bingIndexnowKey]");
+            var enableBingPush = document.querySelector("input[name=enableBingPush]:checked");
+            if (enableBingPush && enableBingPush.value === "1" && keyInput && keyInput.value.trim()) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "' . Helper::options()->index . '/action/uSitemap?do=regenerate_indexnow_file", true);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response.success && response.message.includes("已成功创建")) {
+                                // 验证文件已重新创建，显示提示
+                                showToast("success", "验证文件已修复", "检测到验证文件缺失，已自动重新创建");
+                            }
+                        } catch (e) {
+                            // 忽略错误
+                        }
+                    }
+                };
+                xhr.send();
+            }
+
             function loadLogs() {
                 logsContent.innerHTML = "<div style=\"text-align: center; color: #999; padding: 40px;\">加载中...</div>";
 
@@ -1232,7 +1255,7 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             NULL,
             '',
             _t('Bing IndexNow Key'),
-            _t('IndexNow验证密钥，留空则启用时自动生成。插件会自动在网站根目录创建验证文件')
+            _t('IndexNow验证密钥，启用时自动生成。插件会自动在网站根目录创建验证文件（不建议手动修改）')
         );
         $form->addInput($bingIndexnowKey);
 
@@ -1263,6 +1286,15 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
         echo '<script>
         document.addEventListener("DOMContentLoaded", function() {
             setTimeout(function() {
+                // 将 IndexNow Key 输入框设置为只读
+                var keyInput = document.querySelector("input[name=bingIndexnowKey]");
+                if (keyInput) {
+                    keyInput.setAttribute("readonly", "readonly");
+                    keyInput.style.backgroundColor = "#f5f5f5";
+                    keyInput.style.cursor = "not-allowed";
+                    keyInput.setAttribute("title", "IndexNow Key 为自动生成，不支持手动修改");
+                }
+
                 // 将配置项移动到对应的标签页
                 var baiduContent = document.getElementById("baidu-content");
                 var bingContent = document.getElementById("bing-content");

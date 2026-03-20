@@ -34,6 +34,7 @@ class uSitemap_Action extends Typecho_Widget implements Widget_Interface_Do
         $this->on($this->request->is('do=generate_indexnow_key'))->generateIndexnowKey();
         $this->on($this->request->is('do=check_indexnow_file'))->checkIndexnowFile();
         $this->on($this->request->is('do=delete_indexnow_file'))->deleteIndexnowFile();
+        $this->on($this->request->is('do=regenerate_indexnow_file'))->regenerateIndexnowFile();
     }
     
     /**
@@ -724,6 +725,16 @@ class uSitemap_Action extends Typecho_Widget implements Widget_Interface_Do
         // 获取网站根目录
         $rootDir = defined('__TYPECHO_ROOT_DIR__') ? __TYPECHO_ROOT_DIR__ : dirname(__DIR__, 3);
 
+        // 删除旧的验证文件（如果存在）
+        $pluginOptions = $this->options->plugin('uSitemap');
+        if ($pluginOptions && !empty($pluginOptions->bingIndexnowKey)) {
+            $oldKey = $pluginOptions->bingIndexnowKey;
+            $oldKeyFile = $rootDir . '/' . $oldKey . '.txt';
+            if (file_exists($oldKeyFile)) {
+                @unlink($oldKeyFile);
+            }
+        }
+
         // 创建验证文件
         $keyFile = $rootDir . '/' . $key . '.txt';
         $result = @file_put_contents($keyFile, $key);
@@ -862,5 +873,78 @@ class uSitemap_Action extends Typecho_Widget implements Widget_Interface_Do
                 'message' => '删除验证文件失败，请检查文件权限'
             ));
         }
+    }
+
+    /**
+     * 重新生成 IndexNow 验证文件
+     * 当验证文件被手动删除时使用
+     */
+    public function regenerateIndexnowFile()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用了 Bing 推送
+        if (!$pluginOptions || $pluginOptions->enableBingPush != '1') {
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'Bing推送功能未启用'
+            ));
+            return;
+        }
+
+        // 获取 IndexNow Key
+        $key = isset($pluginOptions->bingIndexnowKey) ? $pluginOptions->bingIndexnowKey : '';
+
+        if (empty($key)) {
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'IndexNow Key 未设置，无法生成验证文件'
+            ));
+            return;
+        }
+
+        // 获取网站根目录
+        $rootDir = defined('__TYPECHO_ROOT_DIR__') ? __TYPECHO_ROOT_DIR__ : dirname(__DIR__, 3);
+
+        // 构建验证文件路径
+        $keyFile = $rootDir . '/' . $key . '.txt';
+
+        // 检查文件是否已存在
+        if (file_exists($keyFile)) {
+            // 验证文件内容是否正确
+            $fileContent = trim(@file_get_contents($keyFile));
+            if ($fileContent === $key) {
+                $this->response->throwJson(array(
+                    'success' => true,
+                    'message' => '验证文件已存在且内容正确，无需重新生成',
+                    'file_path' => $keyFile
+                ));
+                return;
+            }
+        }
+
+        // 创建/覆盖验证文件
+        $result = @file_put_contents($keyFile, $key);
+
+        if ($result === false) {
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => '创建验证文件失败，请检查网站根目录权限',
+                'file_path' => $keyFile
+            ));
+            return;
+        }
+
+        // 构建验证文件的可访问 URL
+        $siteUrl = rtrim($this->options->siteUrl, '/');
+        $fileUrl = $siteUrl . '/' . $key . '.txt';
+
+        $this->response->throwJson(array(
+            'success' => true,
+            'message' => '验证文件已成功创建',
+            'file_path' => $keyFile,
+            'file_url' => $fileUrl,
+            'key' => $key
+        ));
     }
 } 
