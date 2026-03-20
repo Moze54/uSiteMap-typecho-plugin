@@ -588,17 +588,20 @@ class uSitemap_Action extends Typecho_Widget implements Widget_Interface_Do
         $logs = array();
 
         if (is_dir($logDir)) {
-            $files = glob($logDir . '/baidu_push_*.log');
+            $files = glob($logDir . '/*_push_*.log');
             rsort($files); // 按日期倒序
 
             foreach ($files as $file) {
                 $content = @file_get_contents($file);
                 if ($content) {
-                    $date = preg_replace('/.*baidu_push_(\d{8})\.log/', '$1', basename($file));
-                    $logs[] = array(
-                        'date' => $date,
-                        'content' => $content
-                    );
+                    // 匹配 baidu_push_YYYYMMDD.log 或 bing_push_YYYYMMDD.log
+                    if (preg_match('/(\w+)_push_(\d{8})\.log/', basename($file), $matches)) {
+                        $date = $matches[2];
+                        $logs[] = array(
+                            'date' => $date,
+                            'content' => $content
+                        );
+                    }
                 }
             }
         }

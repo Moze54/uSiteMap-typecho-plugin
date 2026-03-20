@@ -1,6 +1,6 @@
 # Typecho uSitemap 插件
 
-自动生成符合标准的 XML 网站地图，支持百度和必应搜索引擎推送，帮助搜索引擎更好地索引您的网站内容。
+自动生成符合标准的 XML 网站地图，支持百度和 IndexNow（Bing、Yandex 等）搜索引擎推送，帮助搜索引擎更好地索引您的网站内容。
 
 ## ✨ 功能特性
 
@@ -15,10 +15,19 @@
 
 ### 搜索引擎推送
 - 📍 **百度推送** - 支持API推送和Sitemap推送两种方式
-- 🎯 **Bing推送** - 支持API批量推送
+- 🎯 **IndexNow推送** - 使用 IndexNow API，一次推送同时通知 Bing、Yandex、Seznam 等多个搜索引擎
 - 🤖 **自动推送** - 文章发布/更新时自动推送到搜索引擎
 - 📊 **推送日志** - 详细的推送记录，便于追踪推送状态
 - 🎛️ **灵活配置** - 可自定义推送时机和推送数量
+
+## 📦 环境要求
+
+### 必需的 PHP 扩展
+- **curl** - 用于搜索引擎推送
+- **dom** 或 **simplexml** - 用于生成 XML 站点地图
+
+### 必需的权限
+- **网站根目录写入权限** - 用于创建 IndexNow 验证文件（{key}.txt）
 
 ## 📦 安装方法
 
@@ -70,26 +79,38 @@
 
 #### 百度推送
 - **启用百度推送**：开启后，文章发布/更新时会自动推送到百度
-- **百度站点**：百度站长平台中验证的站点域名
-- **百度推送Token**：在百度站长平台「普通收录」中获取的推送接口令牌
+- **百度站点**：百度站长平台中验证的站点域名（如：example.com）
+- **百度推送Token**：在百度站长平台「普通收录」-「资源提交」-「普通收录」中获取的推送接口令牌
 - **推送方式**：
   - API推送：实时推送单个URL，速度更快
   - Sitemap推送：推送sitemap地址，批量提交
-- **自动推送触发**：可选择在发布文章时或更新文章时推送
-- **手动推送数量**：手动推送时推送的最新N条内容
+- **自动推送触发**：可选择在发布文章时或更新文章时推送（建议同时勾选）
+- **手动推送数量**：手动推送时推送的最新N条内容，建议不超过100条
 
-#### Bing推送
-- **启用Bing推送**：开启后，文章发布/更新时会自动推送到Bing
-- **Bing API密钥**：在Bing Webmaster Tools中获取的API密钥
-- **Bing站点URL**：在Bing Webmaster Tools中验证的站点URL
-- **自动推送触发**：可选择在发布文章时或更新文章时推送
-- **手动推送数量**：手动推送时推送的最新N条内容
-
-**获取Bing API密钥步骤**：
-1. 访问 [Bing Webmaster Tools](https://www.bing.com/webmasters)
+**如何获取百度推送配置**：
+1. 访问 [百度搜索资源平台](https://ziyuan.baidu.com/)
 2. 登录并验证网站所有权
-3. 进入「API Access」-「API Key」
-4. 点击「Generate API Key」生成API密钥
+3. 进入「普通收录」→「资源提交」→「普通收录」
+4. 选择「API推送」方式，获取推送接口令牌(Token)
+5. 在「资源提交」-「资源替换」中获取站点域名
+
+#### IndexNow推送（Bing、Yandex等）
+- **启用IndexNow推送**：开启后，文章发布/更新时会自动推送到支持 IndexNow 的搜索引擎
+- **IndexNow Key**：IndexNow验证密钥，留空则启用时自动生成。插件会自动在网站根目录创建验证文件
+- **自动推送触发**：可选择在发布文章时或更新文章时推送（建议同时勾选，IndexNow API 支持实时通知搜索引擎内容更新）
+- **手动推送数量**：手动推送时推送的最新N条内容，建议不超过100条
+
+**关于 IndexNow**：
+本插件使用 Microsoft Bing 的 IndexNow API 进行推送。启用时会自动生成验证密钥并创建验证文件到网站根目录。
+
+**自动配置流程**：
+1. 启用 IndexNow 推送功能（Key 留空即可自动生成）
+2. 保存配置后，插件会自动生成随机密钥
+3. 插件会自动在网站根目录创建验证文件（格式：{key}.txt）
+4. 验证文件内容为密钥本身，确保可公网访问
+5. 即可开始推送 URL 到 Bing 和其他支持 IndexNow 的搜索引擎
+
+IndexNow 会同时推送到 Bing、Yandex、Seznam 等多个搜索引擎。
 
 ## 📝 使用方法
 
@@ -243,7 +264,7 @@ Sitemap: https://your-domain.com/sitemap.xml
 
 #### 推送限制
 - 百度API：单次最多2000条
-- Bing API：逐个推送
+- IndexNow API：最多10,000条
 
 ## ❓ 常见问题
 
@@ -277,11 +298,12 @@ Sitemap: https://your-domain.com/sitemap.xml
 - 确认网站已在搜索引擎平台验证通过
 - 查看推送记录中的错误信息
 - 检查服务器网络连接是否正常
+- 确认 PHP curl 扩展已启用
 
 #### 7. 推送次数有限制吗？
 各搜索引擎对API推送都有配额限制：
 - 百度：每天最多10万次
-- Bing：每天最多2000次
+- IndexNow：无明确限制，建议合理使用
 
 #### 8. 自动推送和手动推送有什么区别？
 - **自动推送**：文章发布/更新时自动触发，无需手动操作
@@ -289,6 +311,12 @@ Sitemap: https://your-domain.com/sitemap.xml
 
 #### 9. 推送日志保存在哪里？
 推送日志保存在 `usr/plugins/uSitemap/logs/` 目录下，按日期和搜索引擎分类存储。
+
+#### 10. IndexNow 推送失败，提示验证文件不存在？
+- 确保网站根目录有写入权限
+- 使用插件设置中的"检测验证文件"功能检查
+- 验证文件应位于网站根目录，格式为：{key}.txt
+- 确保验证文件可以公网访问
 
 ## 🔧 高级用法
 
@@ -330,7 +358,7 @@ Helper::addRoute('sitemap', '/your-custom-path.xml', 'uSitemap_Action', 'index')
 
 本插件严格遵循以下规范：
 - [Sitemap 协议 0.9](https://www.sitemaps.org/protocol.html)
-- [Bing Webmaster API](https://docs.microsoft.com/en-us/bing/webmaster-tools/)
+- [IndexNow API](https://www.indexnow.org/)
 - [W3C Datetime 格式](https://www.w3.org/TR/NOTE-datetime)
 
 ## 🔗 相关资源
@@ -338,23 +366,25 @@ Helper::addRoute('sitemap', '/your-custom-path.xml', 'uSitemap_Action', 'index')
 ### 官方平台
 - [Typecho 官网](http://typecho.org)
 - [Sitemap 协议官网](https://www.sitemaps.org)
-- [Bing Webmaster Tools](https://www.bing.com/webmasters)
+- [IndexNow 官网](https://www.indexnow.org/)
 - [百度搜索资源平台](https://ziyuan.baidu.com)
 
 ### 开发文档
-- [Bing Submit URL API](https://docs.microsoft.com/en-us/bing/webmaster-tools/submit-url-api)
+- [IndexNow 文档](https://www.indexnow.org/documentation)
 - [百度推送接口](https://ziyuan.baidu.com/wiki/last调用)
 
 ## 📝 更新日志
 
-### 2.0.0 (2025-03-19)
+### 2.0.0 (2025-03-20)
 - 🎉 **重大更新** - 新增多搜索引擎推送功能
 - ✅ **百度推送** - 支持API推送和Sitemap推送两种方式
-- ✅ **Bing推送** - 支持API批量推送
+- ✅ **IndexNow推送** - 使用 IndexNow API，一次推送通知多个搜索引擎
 - 🤖 **自动推送** - 文章发布/更新时自动推送
 - 📊 **推送日志** - 详细的推送记录功能
 - 🎨 **界面优化** - 全新的标签页式配置界面
 - 📝 **帮助提示** - 每个搜索引擎配置都附带详细的获取指南
+- 🔧 **环境检测** - 自动检测并提示必需的 PHP 扩展和权限
+- 🛠️ **兼容性改进** - 自动处理空配置，使用默认值
 
 ### 1.0.0 (2025-10-13)
 - 🎉 首次发布
@@ -366,7 +396,7 @@ Helper::addRoute('sitemap', '/your-custom-path.xml', 'uSitemap_Action', 'index')
 
 ## 👨‍💻 作者
 
-**cxuxrxsxoxr**
+**优优**
 
 ## 📄 许可证
 
@@ -379,7 +409,7 @@ uSitemap/
 ├── Plugin.php              # 插件主文件
 ├── Action.php              # 动作类，处理Sitemap生成和推送
 ├── BaiduPusher.php         # 百度推送类
-├── BingPusher.php          # Bing推送类
+├── BingPusher.php          # IndexNow推送类
 ├── SearchEnginePusher.php  # 搜索引擎推送基类
 ├── logs/                   # 推送日志目录
 │   ├── baidu_push_*.log
@@ -402,4 +432,4 @@ uSitemap/
 
 ---
 
-**注意**：使用本插件前请确保您的服务器支持 PHP curl 扩展，否则推送功能无法使用。
+**注意**：使用本插件前请确保您的服务器支持 PHP curl 和 dom/simplexml 扩展，并且网站根目录具有写入权限（用于创建 IndexNow 验证文件）。

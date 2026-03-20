@@ -119,6 +119,56 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             opacity: 0.8;
             color: #1565c0;
         }
+        .usitemap-requirements {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border-radius: 10px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(255, 152, 0, 0.15);
+        }
+        .usitemap-requirements-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #e65100;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .usitemap-requirements-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .usitemap-requirements-section {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .usitemap-requirements-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e65100;
+            margin-bottom: 10px;
+        }
+        .usitemap-requirements-list {
+            margin: 0;
+            padding-left: 20px;
+            list-style-type: disc;
+        }
+        .usitemap-requirements-list li {
+            color: #bf360c;
+            font-size: 13px;
+            line-height: 1.8;
+            margin-bottom: 5px;
+        }
+        .usitemap-requirements-list strong {
+            color: #e65100;
+            font-family: Consolas, Monaco, monospace;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
         .usitemap-tabs {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -364,6 +414,24 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             <div class="usitemap-header">
                 <h2>🗺️ uSitemap</h2>
                 <p>自动生成 XML 站点地图，支持百度和必应推送</p>
+            </div>
+            <div class="usitemap-requirements">
+                <div class="usitemap-requirements-title">⚠️ 环境要求</div>
+                <div class="usitemap-requirements-content">
+                    <div class="usitemap-requirements-section">
+                        <div class="usitemap-requirements-section-title">📦 必需的 PHP 扩展</div>
+                        <ul class="usitemap-requirements-list">
+                            <li><strong>curl</strong> - 用于搜索引擎推送</li>
+                            <li><strong>dom</strong> 或 <strong>simplexml</strong> - 用于生成 XML 站点地图</li>
+                        </ul>
+                    </div>
+                    <div class="usitemap-requirements-section">
+                        <div class="usitemap-requirements-section-title">🔐 必需的权限</div>
+                        <ul class="usitemap-requirements-list">
+                            <li><strong>网站根目录写入权限</strong> - 用于创建 IndexNow 验证文件（{key}.txt）</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             <div class="usitemap-tabs">
@@ -1175,9 +1243,9 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                 'publish' => _t('发布文章时'),
                 'update' => _t('更新文章时')
             ),
-            array('publish'),
+            array('publish', 'update'),
             _t('自动推送触发'),
-            _t('选择何时自动推送到Bing')
+            _t('选择何时自动推送到Bing（建议同时勾选，IndexNow API 支持实时通知搜索引擎内容更新）')
         );
         $form->addInput($bingPushTrigger->multiMode());
 
@@ -1267,8 +1335,13 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             return;
         }
 
-        // 判断是新发布还是更新（created大于当前时间-60秒视为新发布）
-        $isNewPublish = isset($contents['created']) && $contents['created'] >= time() - 60;
+        // 判断是新发布还是更新
+        // 方法：检查 created 和 modified 时间差，如果基本一致（5秒内）则认为是新发布
+        $isNewPublish = false;
+        if (isset($contents['created']) && isset($contents['modified'])) {
+            $timeDiff = abs($contents['modified'] - $contents['created']);
+            $isNewPublish = ($timeDiff <= 5);
+        }
 
         // 推送到百度
         self::pushToSearchEngine('baidu', $pluginOptions, $permalink, $isNewPublish);
@@ -1308,6 +1381,16 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
 
         $triggers = isset($pluginOptions->$triggerKey) ? $pluginOptions->$triggerKey : array();
 
+        // 确保 $triggers 是数组
+        if (!is_array($triggers)) {
+            $triggers = array($triggers);
+        }
+
+        // 兼容性处理：如果 triggers 为空，使用默认值（同时支持发布和更新）
+        if (empty($triggers)) {
+            $triggers = array('publish', 'update');
+        }
+
         // 检查是否应该触发推送
         $shouldPush = false;
         if ($isNewPublish && in_array('publish', $triggers)) {
@@ -1334,14 +1417,9 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
 
         // 执行推送
         try {
-            $result = $pusher->pushUrl($permalink);
-
-            // 记录推送结果到日志
-            if (!$result['success']) {
-                error_log('uSitemap ' . $engine . '推送失败: ' . $result['message']);
-            }
+            $pusher->pushUrl($permalink);
         } catch (Exception $e) {
-            error_log('uSitemap ' . $engine . '推送异常: ' . $e->getMessage());
+            // 忽略异常，避免影响文章发布
         }
     }
 } 
