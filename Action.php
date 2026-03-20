@@ -31,6 +31,9 @@ class uSitemap_Action extends Typecho_Widget implements Widget_Interface_Do
         $this->on($this->request->is('do=bing-push'))->bingPush();
         $this->on($this->request->is('do=get_logs'))->getLogs();
         $this->on($this->request->is('do=clear_logs'))->clearLogs();
+        $this->on($this->request->is('do=generate_indexnow_key'))->generateIndexnowKey();
+        $this->on($this->request->is('do=check_indexnow_file'))->checkIndexnowFile();
+        $this->on($this->request->is('do=delete_indexnow_file'))->deleteIndexnowFile();
     }
     
     /**
@@ -705,5 +708,156 @@ class uSitemap_Action extends Typecho_Widget implements Widget_Interface_Do
 
         // 返回结果
         $this->response->throwJson($result);
+    }
+
+    /**
+     * 生成 IndexNow Key
+     */
+    public function generateIndexnowKey()
+    {
+        // 生成随机 key
+        $key = md5(uniqid(mt_rand(), true));
+
+        // 获取网站根目录
+        $rootDir = defined('__TYPECHO_ROOT_DIR__') ? __TYPECHO_ROOT_DIR__ : dirname(__DIR__, 3);
+
+        // 创建验证文件
+        $keyFile = $rootDir . '/' . $key . '.txt';
+        $result = @file_put_contents($keyFile, $key);
+
+        if ($result === false) {
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => '创建验证文件失败，请检查网站根目录权限'
+            ));
+            return;
+        }
+
+        $this->response->throwJson(array(
+            'success' => true,
+            'key' => $key,
+            'message' => 'IndexNow Key 生成成功'
+        ));
+    }
+
+    /**
+     * 检测 IndexNow 验证文件
+     */
+    public function checkIndexnowFile()
+    {
+        $pluginOptions = $this->options->plugin('uSitemap');
+
+        // 检查是否启用了 Bing 推送
+        if (!$pluginOptions || $pluginOptions->enableBingPush != '1') {
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'Bing推送功能未启用',
+                'exists' => false
+            ));
+            return;
+        }
+
+        // 获取 IndexNow Key
+        $key = isset($pluginOptions->bingIndexnowKey) ? $pluginOptions->bingIndexnowKey : '';
+
+        if (empty($key)) {
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'IndexNow Key 未设置，请先生成密钥',
+                'exists' => false
+            ));
+            return;
+        }
+
+        // 获取网站根目录
+        $rootDir = defined('__TYPECHO_ROOT_DIR__') ? __TYPECHO_ROOT_DIR__ : dirname(__DIR__, 3);
+
+        // 检查验证文件是否存在
+        $keyFile = $rootDir . '/' . $key . '.txt';
+        $fileExists = file_exists($keyFile);
+
+        if ($fileExists) {
+            // 检查文件内容是否正确
+            $fileContent = trim(@file_get_contents($keyFile));
+            $contentValid = ($fileContent === $key);
+
+            if ($contentValid) {
+                // 构建验证文件的可访问 URL
+                $siteUrl = rtrim($this->options->siteUrl, '/');
+                $fileUrl = $siteUrl . '/' . $key . '.txt';
+
+                $this->response->throwJson(array(
+                    'success' => true,
+                    'exists' => true,
+                    'valid' => true,
+                    'message' => '验证文件存在且内容正确',
+                    'file_url' => $fileUrl,
+                    'file_path' => $keyFile
+                ));
+            } else {
+                $this->response->throwJson(array(
+                    'success' => false,
+                    'exists' => true,
+                    'valid' => false,
+                    'message' => '验证文件存在但内容不正确',
+                    'file_path' => $keyFile,
+                    'expected' => $key,
+                    'actual' => $fileContent
+                ));
+            }
+        } else {
+            $this->response->throwJson(array(
+                'success' => false,
+                'exists' => false,
+                'message' => '验证文件不存在，请重新生成密钥',
+                'file_path' => $keyFile
+            ));
+        }
+    }
+
+    /**
+     * 删除 IndexNow 验证文件
+     */
+    public function deleteIndexnowFile()
+    {
+        $key = $this->request->get('key');
+
+        if (empty($key)) {
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => 'Key参数不能为空'
+            ));
+            return;
+        }
+
+        // 获取网站根目录
+        $rootDir = defined('__TYPECHO_ROOT_DIR__') ? __TYPECHO_ROOT_DIR__ : dirname(__DIR__, 3);
+
+        // 构建验证文件路径
+        $keyFile = $rootDir . '/' . $key . '.txt';
+
+        // 检查文件是否存在
+        if (!file_exists($keyFile)) {
+            $this->response->throwJson(array(
+                'success' => true,
+                'message' => '验证文件不存在，无需删除'
+            ));
+            return;
+        }
+
+        // 删除文件
+        $result = @unlink($keyFile);
+
+        if ($result) {
+            $this->response->throwJson(array(
+                'success' => true,
+                'message' => '验证文件已成功删除'
+            ));
+        } else {
+            $this->response->throwJson(array(
+                'success' => false,
+                'message' => '删除验证文件失败，请检查文件权限'
+            ));
+        }
     }
 } 

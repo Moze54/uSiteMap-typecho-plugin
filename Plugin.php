@@ -58,6 +58,25 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
      */
     public static function deactivate()
     {
+        // 删除 IndexNow 验证文件
+        try {
+            $options = Helper::options();
+            $pluginOptions = $options->plugin('uSitemap');
+
+            if ($pluginOptions && !empty($pluginOptions->bingIndexnowKey)) {
+                $key = $pluginOptions->bingIndexnowKey;
+                $rootDir = defined('__TYPECHO_ROOT_DIR__') ? __TYPECHO_ROOT_DIR__ : dirname(__DIR__, 3);
+                $keyFile = $rootDir . '/' . $key . '.txt';
+
+                // 删除验证文件
+                if (file_exists($keyFile)) {
+                    @unlink($keyFile);
+                }
+            }
+        } catch (Exception $e) {
+            // 忽略错误，继续禁用插件
+        }
+
         // 移除路由
         Helper::removeRoute('sitemap');
 
@@ -212,6 +231,133 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             font-size: 13px;
             line-height: 1.8;
         }
+        .usitemap-loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .usitemap-loading-box {
+            background: #fff;
+            padding: 40px 50px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            min-width: 320px;
+        }
+        .usitemap-loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1976d2;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: usitemap-spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes usitemap-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .usitemap-loading-text {
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .usitemap-loading-desc {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+        .usitemap-toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            min-width: 300px;
+            max-width: 500px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            z-index: 10000;
+            display: none;
+            align-items: flex-start;
+            gap: 12px;
+            animation: usitemap-slideIn 0.3s ease-out;
+        }
+        @keyframes usitemap-slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .usitemap-toast.success {
+            border-left: 4px solid #4caf50;
+        }
+        .usitemap-toast.error {
+            border-left: 4px solid #f44336;
+        }
+        .usitemap-toast.info {
+            border-left: 4px solid #2196f3;
+        }
+        .usitemap-toast-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .usitemap-toast.success .usitemap-toast-icon {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+        .usitemap-toast.error .usitemap-toast-icon {
+            background: #ffebee;
+            color: #f44336;
+        }
+        .usitemap-toast.info .usitemap-toast-icon {
+            background: #e3f2fd;
+            color: #2196f3;
+        }
+        .usitemap-toast-content {
+            flex: 1;
+        }
+        .usitemap-toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .usitemap-toast-message {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+        }
+        .usitemap-toast-close {
+            flex-shrink: 0;
+            cursor: pointer;
+            color: #999;
+            font-size: 18px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        .usitemap-toast-close:hover {
+            color: #666;
+        }
         </style>
 
         <div class="usitemap-container">
@@ -282,17 +428,34 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             </div>
 
             <div id="bing-section" class="usitemap-section">
-                <div class="usitemap-section-title">🎯 Bing推送</div>
+                <div class="usitemap-section-title">🎯 Bing推送 (IndexNow API)</div>
                 <div id="bing-content"></div>
                 <div style="margin-top: 30px; padding: 20px; background: #e0f2f1; border-left: 4px solid #008374; border-radius: 8px;">
-                    <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #00695c;">💡 如何获取Bing推送配置</h4>
+                    <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #00695c;">💡 关于 IndexNow</h4>
+                    <p style="margin: 0 0 15px 0; font-size: 13px; color: #00695c; line-height: 1.8;">
+                        本插件使用 Microsoft Bing 的 IndexNow API 进行推送。启用时会自动生成验证密钥并创建验证文件到网站根目录。
+                    </p>
+                    <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #00695c;">✨ 自动配置流程</h4>
                     <ol style="margin: 0; padding-left: 20px; color: #00695c; font-size: 13px; line-height: 2;">
-                        <li>访问 <a href="https://www.bing.com/webmasters" target="_blank" style="color: #1976d2; text-decoration: underline;">Bing Webmaster Tools</a></li>
-                        <li>登录并验证网站所有权</li>
-                        <li>进入「API Access」-「API Key」</li>
-                        <li>点击「Generate API Key」生成API密钥</li>
-                        <li>复制API密钥和站点URL</li>
+                        <li>启用 Bing 推送功能（Key 留空即可自动生成）</li>
+                        <li>保存配置后，插件会自动生成随机密钥</li>
+                        <li>插件会自动在网站根目录创建验证文件（格式：{key}.txt）</li>
+                        <li>验证文件内容为密钥本身，确保可公网访问</li>
+                        <li>即可开始推送 URL 到 Bing 和其他支持 IndexNow 的搜索引擎</li>
                     </ol>
+                    <p style="margin: 15px 0 0 0; font-size: 12px; color: #00695c;">
+                        📌 IndexNow 会同时推送到 Bing、Yandex、Seznam 等多个搜索引擎
+                    </p>
+                </div>
+                <div class="usitemap-check-file-area" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e1e4e8;">
+                    <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #333;">🔍 检测验证文件</h4>
+                    <p style="margin: 0 0 15px 0; font-size: 13px; color: #666; line-height: 1.6;">
+                        点击下方按钮检测 IndexNow 验证文件是否已正确创建到网站根目录。
+                    </p>
+                    <button type="button" id="check-indexnow-file-btn" class="btn-primary" style="padding: 10px 24px; background: #008374; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s;">
+                        检测验证文件
+                    </button>
+                    <div id="check-indexnow-file-result" style="margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 13px; display: none;"></div>
                 </div>
                 <div class="usitemap-manual-push-area" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e1e4e8;">
                     <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #333;">🚀 手动推送</h4>
@@ -305,6 +468,23 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                     <div id="bing-push-result" style="margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 13px; display: none;"></div>
                 </div>
             </div>
+        </div>
+
+        <div class="usitemap-loading-overlay" id="usitemap-loading-overlay">
+            <div class="usitemap-loading-box">
+                <div class="usitemap-loading-spinner"></div>
+                <div class="usitemap-loading-text">正在生成 IndexNow 密钥</div>
+                <div class="usitemap-loading-desc">正在创建验证文件到网站根目录，请稍候...</div>
+            </div>
+        </div>
+
+        <div class="usitemap-toast" id="usitemap-toast">
+            <div class="usitemap-toast-icon"></div>
+            <div class="usitemap-toast-content">
+                <div class="usitemap-toast-title"></div>
+                <div class="usitemap-toast-message"></div>
+            </div>
+            <div class="usitemap-toast-close">&times;</div>
         </div>
 
         <div class="usitemap-temp-container" style="display:none;"></div>';
@@ -543,10 +723,217 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             // 设置Bing推送按钮
             setupPushButton("bing-push-btn", "bing-push-result", "bing_manual_push");
 
+            // IndexNow 验证文件检测功能
+            var checkIndexnowFileBtn = document.getElementById("check-indexnow-file-btn");
+            var checkIndexnowFileResult = document.getElementById("check-indexnow-file-result");
+
+            if (checkIndexnowFileBtn) {
+                checkIndexnowFileBtn.addEventListener("click", function() {
+                    // 禁用按钮，显示加载状态
+                    checkIndexnowFileBtn.disabled = true;
+                    checkIndexnowFileBtn.textContent = "检测中...";
+                    checkIndexnowFileBtn.style.opacity = "0.6";
+
+                    // 显示加载提示
+                    checkIndexnowFileResult.style.display = "block";
+                    checkIndexnowFileResult.style.background = "#e3f2fd";
+                    checkIndexnowFileResult.style.color = "#1976d2";
+                    checkIndexnowFileResult.textContent = "正在检测验证文件，请稍候...";
+
+                    // 发送AJAX请求
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", "' . Helper::options()->index . '/action/uSitemap?do=check_indexnow_file", true);
+                    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4) {
+                            // 恢复按钮状态
+                            checkIndexnowFileBtn.disabled = false;
+                            checkIndexnowFileBtn.textContent = "检测验证文件";
+                            checkIndexnowFileBtn.style.opacity = "1";
+
+                            // 显示结果
+                            checkIndexnowFileResult.style.display = "block";
+
+                            if (xhr.status === 200) {
+                                try {
+                                    var response = JSON.parse(xhr.responseText);
+
+                                    if (response.success && response.exists && response.valid) {
+                                        // 文件存在且内容正确
+                                        checkIndexnowFileResult.style.background = "#e8f5e9";
+                                        checkIndexnowFileResult.style.color = "#2e7d32";
+                                        var message = "✓ " + response.message;
+                                        if (response.file_url) {
+                                            message += `<br>文件地址: <a href="` + response.file_url + `" target="_blank" style="color: #1976d2;">` + response.file_url + `</a>`;
+                                        }
+                                        checkIndexnowFileResult.innerHTML = message;
+                                    } else if (response.success && response.exists && !response.valid) {
+                                        // 文件存在但内容不正确
+                                        checkIndexnowFileResult.style.background = "#fff3e0";
+                                        checkIndexnowFileResult.style.color = "#e65100";
+                                        checkIndexnowFileResult.textContent = "✗ " + response.message + "，请重新生成密钥";
+                                    } else if (!response.success && !response.exists) {
+                                        // 文件不存在
+                                        checkIndexnowFileResult.style.background = "#ffebee";
+                                        checkIndexnowFileResult.style.color = "#c62828";
+                                        checkIndexnowFileResult.textContent = "✗ " + response.message;
+                                    } else {
+                                        // 其他错误
+                                        checkIndexnowFileResult.style.background = "#ffebee";
+                                        checkIndexnowFileResult.style.color = "#c62828";
+                                        checkIndexnowFileResult.textContent = "✗ " + response.message;
+                                    }
+                                } catch (e) {
+                                    checkIndexnowFileResult.style.background = "#ffebee";
+                                    checkIndexnowFileResult.style.color = "#c62828";
+                                    checkIndexnowFileResult.textContent = "✗ 解析响应失败: " + xhr.responseText;
+                                }
+                            } else {
+                                checkIndexnowFileResult.style.background = "#ffebee";
+                                checkIndexnowFileResult.style.color = "#c62828";
+                                checkIndexnowFileResult.textContent = "✗ 请求失败，HTTP状态码: " + xhr.status;
+                            }
+                        }
+                    };
+
+                    xhr.onerror = function() {
+                        checkIndexnowFileBtn.disabled = false;
+                        checkIndexnowFileBtn.textContent = "检测验证文件";
+                        checkIndexnowFileBtn.style.opacity = "1";
+
+                        checkIndexnowFileResult.style.display = "block";
+                        checkIndexnowFileResult.style.background = "#ffebee";
+                        checkIndexnowFileResult.style.color = "#c62828";
+                        checkIndexnowFileResult.textContent = "✗ 网络请求失败，请检查网络连接";
+                    };
+
+                    xhr.send();
+                });
+            }
+
             // 推送记录功能
             var logsContent = document.getElementById("logs-content");
             var refreshLogsBtn = document.getElementById("refresh-logs-btn");
             var clearLogsBtn = document.getElementById("clear-logs-btn");
+
+            // 拦截表单提交，处理 Bing IndexNow Key 自动生成和删除
+            var form = document.querySelector("form");
+            var loadingOverlay = document.getElementById("usitemap-loading-overlay");
+            var toast = document.getElementById("usitemap-toast");
+
+            // 显示加载遮罩层
+            function showLoading(title, desc) {
+                var titleEl = loadingOverlay.querySelector(".usitemap-loading-text");
+                var descEl = loadingOverlay.querySelector(".usitemap-loading-desc");
+                if (titleEl) titleEl.textContent = title;
+                if (descEl) descEl.textContent = desc;
+                loadingOverlay.style.display = "flex";
+            }
+
+            // 隐藏加载遮罩层
+            function hideLoading() {
+                loadingOverlay.style.display = "none";
+            }
+
+            // 显示 toast 提示
+            function showToast(type, title, message, duration) {
+                duration = duration || 4000;
+
+                toast.className = "usitemap-toast " + type;
+                toast.style.display = "flex";
+
+                var iconEl = toast.querySelector(".usitemap-toast-icon");
+                var titleEl = toast.querySelector(".usitemap-toast-title");
+                var messageEl = toast.querySelector(".usitemap-toast-message");
+
+                if (type === "success") {
+                    iconEl.textContent = "✓";
+                } else if (type === "error") {
+                    iconEl.textContent = "✗";
+                } else {
+                    iconEl.textContent = "ℹ";
+                }
+
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+
+                // 自动隐藏
+                setTimeout(function() {
+                    toast.style.display = "none";
+                }, duration);
+            }
+
+            // toast 关闭按钮
+            var toastClose = toast.querySelector(".usitemap-toast-close");
+            if (toastClose) {
+                toastClose.addEventListener("click", function() {
+                    toast.style.display = "none";
+                });
+            }
+
+            if (form) {
+                form.addEventListener("submit", function(e) {
+                    var enableBingPush = form.querySelector("input[name=enableBingPush]:checked");
+                    var keyInput = form.querySelector("input[name=bingIndexnowKey]");
+
+                    // 检查是否启用了 Bing 推送
+                    if (enableBingPush && enableBingPush.value === "1") {
+                        if (keyInput && !keyInput.value.trim()) {
+                            // 如果 key 为空，阻止提交并生成 key
+                            e.preventDefault();
+
+                            // 显示加载提示
+                            showLoading("正在生成 IndexNow 密钥", "正在创建验证文件到网站根目录，请稍候...");
+
+                            // 发送请求生成 key
+                            var xhr = new XMLHttpRequest();
+                            xhr.open("POST", "' . Helper::options()->index . '/action/uSitemap?do=generate_indexnow_key", true);
+                            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+                            xhr.onreadystatechange = function() {
+                                if (xhr.readyState === 4) {
+                                    hideLoading();
+                                    if (xhr.status === 200) {
+                                        try {
+                                            var response = JSON.parse(xhr.responseText);
+                                            if (response.success) {
+                                                // 设置生成的 key
+                                                keyInput.value = response.key;
+                                                // 显示 toast 提示
+                                                showToast("success", "密钥生成成功", "IndexNow Key: " + response.key + "，验证文件已创建");
+                                                // 继续提交表单
+                                                form.submit();
+                                            } else {
+                                                showToast("error", "生成失败", response.message);
+                                            }
+                                        } catch (e) {
+                                            showToast("error", "解析失败", "响应数据解析失败");
+                                        }
+                                    } else {
+                                        showToast("error", "请求失败", "HTTP状态码: " + xhr.status);
+                                    }
+                                }
+                            };
+
+                            xhr.onerror = function() {
+                                hideLoading();
+                                showToast("error", "网络错误", "网络请求失败，请检查网络连接");
+                            };
+
+                            xhr.send();
+                        } else {
+                            // 已有 key，显示简短提示后继续提交
+                            showLoading("正在保存配置", "正在保存 Bing 推送配置，请稍候...");
+                            setTimeout(function() {
+                                hideLoading();
+                            }, 500);
+                        }
+                    }
+                });
+            }
 
             function loadLogs() {
                 logsContent.innerHTML = "<div style=\"text-align: center; color: #999; padding: 40px;\">加载中...</div>";
@@ -767,29 +1154,19 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             array('1' => _t('启用'), '0' => _t('禁用')),
             '0',
             _t('启用Bing推送'),
-            _t('开启后，文章发布/更新时会自动推送到Bing搜索引擎')
+            _t('开启后，文章发布/更新时会自动推送到Bing搜索引擎（使用IndexNow API）')
         );
         $form->addInput($enableBingPush);
 
-        /** Bing API密钥 */
-        $bingApiKey = new Typecho_Widget_Helper_Form_Element_Text(
-            'bingApiKey',
+        /** Bing IndexNow Key */
+        $bingIndexnowKey = new Typecho_Widget_Helper_Form_Element_Text(
+            'bingIndexnowKey',
             NULL,
             '',
-            _t('Bing API密钥'),
-            _t('在Bing Webmaster Tools中获取的API密钥')
+            _t('Bing IndexNow Key'),
+            _t('IndexNow验证密钥，留空则启用时自动生成。插件会自动在网站根目录创建验证文件')
         );
-        $form->addInput($bingApiKey);
-
-        /** Bing站点URL */
-        $bingSiteUrl = new Typecho_Widget_Helper_Form_Element_Text(
-            'bingSiteUrl',
-            NULL,
-            '',
-            _t('Bing站点URL'),
-            _t('在Bing Webmaster Tools中验证的站点URL')
-        );
-        $form->addInput($bingSiteUrl);
+        $form->addInput($bingIndexnowKey);
 
         /** 自动推送触发时机 */
         $bingPushTrigger = new Typecho_Widget_Helper_Form_Element_Checkbox(
@@ -850,8 +1227,7 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                         var label = options[i].querySelector("label");
                         if (label && (
                             label.textContent.includes("Bing推送") ||
-                            label.textContent.includes("Bing API密钥") ||
-                            label.textContent.includes("Bing站点URL")
+                            label.textContent.includes("IndexNow Key")
                         )) {
                             bingOptions.push(options[i]);
                         }
