@@ -34,7 +34,15 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             if ($config) {
                 $values = unserialize($config['value']);
                 // 删除旧的配置项
-                unset($values['excludeCategories'], $values['excludeTags'], $values['autoPing'], $values['pingEngines']);
+                $keysToDelete = [
+                    'excludeCategories', 'excludeTags', 'autoPing', 'pingEngines',
+                    'enableGooglePush', 'googleApiKey', 'googlePushTrigger', 'googlePushCount',
+                    'enableSogouPush', 'sogouToken', 'sogouPushType', 'sogouPushTrigger', 'sogouPushCount',
+                    'enablePush360Push', 'push360Site', 'push360Token', 'push360PushType', 'push360PushTrigger', 'push360PushCount'
+                ];
+                foreach ($keysToDelete as $key) {
+                    unset($values[$key]);
+                }
                 // 更新配置
                 $db->query($db->update('table.options')->rows(array('value' => serialize($values)))->where('name = ?', 'plugin:uSitemap'));
             }
