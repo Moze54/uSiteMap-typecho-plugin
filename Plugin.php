@@ -4,7 +4,7 @@
  * 
  * @package uSitemap
  * @author 优优
- * @version 1.0.0
+ * @version 2.1.0
  * @link https://blog.uuhb.cn
  */
 class uSitemap_Plugin implements Typecho_Plugin_Interface
