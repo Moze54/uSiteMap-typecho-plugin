@@ -1199,7 +1199,7 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             ),
             array('publish', 'update'),
             _t('自动推送触发'),
-            _t('选择何时自动推送到百度')
+            _t('百度推送：选择何时自动推送到百度')
         );
         $form->addInput($baiduPushTrigger->multiMode());
 
@@ -1209,7 +1209,7 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             NULL,
             '10',
             _t('手动推送数量'),
-            _t('手动推送时推送最新的N条内容，建议不超过100条')
+            _t('百度推送：手动推送时推送最新的N条内容，建议不超过100条')
         );
         $baiduPushCount->input->setAttribute('class', 'mini');
         $form->addInput($baiduPushCount);
@@ -1245,7 +1245,7 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             ),
             array('publish', 'update'),
             _t('自动推送触发'),
-            _t('选择何时自动推送到Bing（建议同时勾选，IndexNow API 支持实时通知搜索引擎内容更新）')
+            _t('Bing推送：选择何时自动推送到Bing（建议同时勾选，IndexNow API 支持实时通知搜索引擎内容更新）')
         );
         $form->addInput($bingPushTrigger->multiMode());
 
@@ -1255,7 +1255,7 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
             NULL,
             '10',
             _t('手动推送数量'),
-            _t('手动推送时推送最新的N条内容，建议不超过100条')
+            _t('Bing推送：手动推送时推送最新的N条内容，建议不超过100条')
         );
         $bingPushCount->input->setAttribute('class', 'mini');
         $form->addInput($bingPushCount);
@@ -1276,11 +1276,22 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                             label.textContent.includes("百度推送") ||
                             label.textContent.includes("百度站点") ||
                             label.textContent.includes("百度推送Token") ||
-                            label.textContent.includes("推送方式") ||
-                            label.textContent.includes("自动推送触发") ||
-                            label.textContent.includes("手动推送数量")
+                            label.textContent.includes("推送方式")
                         )) {
                             baiduOptions.push(options[i]);
+                        }
+                        // 单独处理"自动推送触发"和"手动推送数量"，需要确保是百度相关的
+                        if (label && label.textContent.includes("自动推送触发")) {
+                            var description = options[i].querySelector(".description");
+                            if (description && description.textContent.includes("百度")) {
+                                baiduOptions.push(options[i]);
+                            }
+                        }
+                        if (label && label.textContent.includes("手动推送数量")) {
+                            var description = options[i].querySelector(".description");
+                            if (description && description.textContent.includes("百度")) {
+                                baiduOptions.push(options[i]);
+                            }
                         }
                     }
                     for (var j = 0; j < baiduOptions.length; j++) {
@@ -1298,6 +1309,19 @@ class uSitemap_Plugin implements Typecho_Plugin_Interface
                             label.textContent.includes("IndexNow Key")
                         )) {
                             bingOptions.push(options[i]);
+                        }
+                        // 单独处理"自动推送触发"和"手动推送数量"，需要确保是Bing相关的
+                        if (label && label.textContent.includes("自动推送触发")) {
+                            var description = options[i].querySelector(".description");
+                            if (description && description.textContent.includes("Bing")) {
+                                bingOptions.push(options[i]);
+                            }
+                        }
+                        if (label && label.textContent.includes("手动推送数量")) {
+                            var description = options[i].querySelector(".description");
+                            if (description && description.textContent.includes("Bing")) {
+                                bingOptions.push(options[i]);
+                            }
                         }
                     }
                     for (var j = 0; j < bingOptions.length; j++) {
